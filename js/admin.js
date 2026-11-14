@@ -160,7 +160,7 @@
     const items = p.items.map(it => `
       <li>
         ${it.imagen ? `<img src="${esc(encodeURI(it.imagen))}" alt="" loading="lazy">` : ""}
-        <span class="nom"><strong>${esc(it.nombre)}</strong><small>${esc(it.seccion)}</small></span>
+        <span class="nom"><strong>${esc(it.nombre)}</strong><small>${esc(it.seccion)}${it.precio ? ` · $${Number(it.precio).toLocaleString("es-CO")} c/u` : ""}</small></span>
         <span class="cant">${it.cantidad}x</span>
       </li>`).join("");
     const acciones = [
@@ -173,7 +173,7 @@
         <span class="pedido-num">#${esc(p.numero)}</span>
         <span class="pedido-hora">${hora(p.creado)}<br>${hace(p.creado)}</span>
       </div>
-      <span class="etiqueta-estado">${est.txt}</span>
+      <span class="etiqueta-estado">${est.txt}</span>${p.promo ? ` <span class="etiqueta-promo">Precio promo</span>` : ""}
       <div class="pedido-destino">${destino}</div>
       <ul class="pedido-items">${items}</ul>
       ${p.notas ? `<p class="pedido-notas"><b>Nota:</b> ${esc(p.notas)}</p>` : ""}

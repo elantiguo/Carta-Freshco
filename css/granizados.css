@@ -48,3 +48,17 @@
   color: #fff;
   display: block;
 }
+/* Precio de la sección de granizados */
+.precios-seccion { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; margin: 0 0 16px; }
+.precio-sec {
+  display: flex; flex-direction: column; align-items: center; min-width: 130px;
+  padding: 7px 16px; border-radius: 16px;
+  background: color-mix(in srgb, var(--acento) 16%, transparent);
+  border: 1px solid color-mix(in srgb, var(--acento) 55%, transparent);
+  font-family: var(--f-nombre); font-weight: 700; font-size: 22px; color: #fff;
+  font-variant-numeric: tabular-nums; line-height: 1.15;
+}
+.precio-sec small {
+  font-size: 12.5px; font-weight: 600; letter-spacing: .08em; text-transform: uppercase; color: var(--tenue);
+}
+.precio-sec s { color: var(--tenue); font-size: .7em; font-weight: 600; }

@@ -3,6 +3,18 @@ const ULTIMO_KEY = "freshco_ultimo_pedido";
 
 const Pedido = {
   items: {},
+  tipo: "local", // "local" o "domicilio": cambia el precio de los granizados
+
+  // Precio unitario actual (según tipo de entrega y día de promo)
+  precioUnitario(id) {
+    const p = typeof buscarProducto === "function" ? buscarProducto(id) : null;
+    return p ? precioDe(p.precios, { domicilio: this.tipo === "domicilio" }) : null;
+  },
+
+  cambiarTipo(tipo) {
+    this.tipo = tipo === "domicilio" ? "domicilio" : "local";
+    window.dispatchEvent(new CustomEvent("pedido:actualizado", { detail: this.items }));
+  },
 
   resolverImagen(id = "", nombre = "", seccion = "") {
     if (typeof CARTA === "undefined") return "";
@@ -21,6 +33,7 @@ const Pedido = {
       const data = localStorage.getItem(STORAGE_KEY);
       this.items = data ? JSON.parse(data) : {};
       Object.values(this.items).forEach(it => {
+        delete it.precio; // precios viejos guardados: ahora se calculan siempre
         if (!it.imagen) it.imagen = this.resolverImagen(it.id, it.nombre, it.seccion);
       });
     } catch (e) { this.items = {}; }
@@ -39,7 +52,7 @@ const Pedido = {
     const sec = datos.seccion || (id.split("::")[0] || "");
     if (!this.items[id]) {
       this.items[id] = {
-        id, nombre: nom, seccion: sec, precio: datos.precio || null,
+        id, nombre: nom, seccion: sec,
         imagen: datos.imagen || this.resolverImagen(id, nom, sec), cantidad: 0
       };
     }
@@ -65,11 +78,11 @@ const Pedido = {
   totalItems() { return Object.values(this.items).reduce((acc, it) => acc + it.cantidad, 0); },
 
   totalPrecio() {
-    return Object.values(this.items).reduce((acc, it) => acc + ((Number(it.precio) || 0) * it.cantidad), 0);
+    return Object.values(this.items).reduce((acc, it) => acc + ((this.precioUnitario(it.id) || 0) * it.cantidad), 0);
   },
 
   tienePrecios() {
-    return Object.values(this.items).some(it => it.precio != null && it.precio > 0);
+    return Object.values(this.items).some(it => this.precioUnitario(it.id) > 0);
   },
 
   // Envía el pedido al servidor. Devuelve { id, numero }.

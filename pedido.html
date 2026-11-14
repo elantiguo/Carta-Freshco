@@ -67,7 +67,7 @@ function render(p) {
     : `<ol class="pasos">${PASOS.map((t, i) => `<li class="${i <= est.paso ? "hecho" : ""}${i === est.paso ? " actual" : ""}">${t}</li>`).join("")}</ol>`;
   const itemsHtml = p.items.map(it => {
     const img = it.imagen ? `<img src="${esc(encodeURI(it.imagen))}" alt="${esc(it.nombre)}" loading="lazy">` : "";
-    return `<div class="item">${img}<div><div class="item-nom">${esc(it.nombre)}</div><div class="item-sec">${esc(it.seccion)}</div></div><span class="item-cant">${it.cantidad}x</span></div>`;
+    return `<div class="item">${img}<div><div class="item-nom">${esc(it.nombre)}</div><div class="item-sec">${esc(it.seccion)}${it.precio ? ` · ${Number(it.precio).toLocaleString("es-CO")} c/u` : ""}</div></div><span class="item-cant">${it.cantidad}x</span></div>`;
   }).join("");
   const total = p.total ? ` · $${Number(p.total).toLocaleString("es-CO")}` : "";
 

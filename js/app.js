@@ -4,6 +4,32 @@ const pesos = n => "$" + Number(n).toLocaleString("es-CO");
 
 const main = document.getElementById("carta");
 const nav = document.getElementById("atajos");
+const HOY_PROMO = esDiaPromo();
+
+// Precio con el valor normal tachado si hoy hay promoción
+function montoHtml(precios, domicilio = false) {
+  const actual = precioDe(precios, { domicilio, promo: HOY_PROMO });
+  if (actual == null) return "";
+  const normal = precioDe(precios, { domicilio, promo: false });
+  return actual < normal ? `<s>${pesos(normal)}</s> ${pesos(actual)}` : pesos(actual);
+}
+
+function precioHtml(precios) {
+  const m = montoHtml(precios);
+  if (!m) return "";
+  const enPromo = HOY_PROMO && precioDe(precios, { promo: true }) < precioDe(precios, { promo: false });
+  return `<span class="precio${enPromo ? " en-promo" : ""}">${m}</span>`;
+}
+
+// Para granizados: un precio para toda la sección (local y domicilio)
+function preciosSeccionHtml(precios) {
+  if (!precios) return "";
+  const dom = precios.domicilio != null
+    ? `<span class="precio-sec"><small>A domicilio</small>${montoHtml(precios, true)}</span>` : "";
+  return `<div class="precios-seccion">
+    <span class="precio-sec"><small>En el local</small>${montoHtml(precios)}</span>${dom}
+  </div>`;
+}
 
 function renderLista(s) {
   return `<ul class="lista">${s.items.map(i => {
@@ -16,9 +42,9 @@ function renderLista(s) {
       </span>
       <div><h3>${esc(i.nombre)}</h3>${i.sabor ? `<p>${esc(i.sabor)}</p>` : ""}</div>
       <div class="item-derecha">
-        ${i.precio != null ? `<span class="precio">${pesos(i.precio)}</span>` : ""}
-        <div class="contenedor-control" data-id="${esc(id)}" data-nombre="${esc(i.nombre)}" data-seccion="${esc(s.atajo)}" data-imagen="${esc(img)}"${i.precio != null ? ` data-precio="${i.precio}"` : ""}>
-          ${generarControlHtml(id, i.nombre, s.atajo, i.precio, img)}
+        ${precioHtml(i.precios || s.precios)}
+        <div class="contenedor-control" data-id="${esc(id)}" data-nombre="${esc(i.nombre)}" data-seccion="${esc(s.atajo)}" data-imagen="${esc(img)}">
+          ${generarControlHtml(id, i.nombre, s.atajo, null, img)}
         </div>
       </div>
     </li>`;
@@ -29,13 +55,14 @@ function renderSimple(s) {
   const fotoSec = (s.foto && s.foto.src) ? s.foto.src : "";
   return `<div class="granizado-wrap">
     ${s.foto ? `<img class="granizado-foto" src="${encodeURI(s.foto.src)}" alt="${esc(s.foto.alt)}" loading="lazy">` : ""}
+    ${preciosSeccionHtml(s.precios)}
     <ul class="nombres">${s.items.map(i => {
       const id = `${s.id}::${i.nombre}`;
       return `
       <li>
         <strong>${esc(i.nombre)}</strong>
-        <div class="contenedor-control" data-id="${esc(id)}" data-nombre="${esc(i.nombre)}" data-seccion="${esc(s.atajo)}" data-imagen="${esc(fotoSec)}"${i.precio != null ? ` data-precio="${i.precio}"` : ""}>
-          ${generarControlHtml(id, i.nombre, s.atajo, i.precio, fotoSec)}
+        <div class="contenedor-control" data-id="${esc(id)}" data-nombre="${esc(i.nombre)}" data-seccion="${esc(s.atajo)}" data-imagen="${esc(fotoSec)}">
+          ${generarControlHtml(id, i.nombre, s.atajo, null, fotoSec)}
         </div>
       </li>`;
     }).join("")}
@@ -43,7 +70,13 @@ function renderSimple(s) {
   </div>`;
 }
 
-main.innerHTML = CARTA.map(s => `
+const BANNER_PROMO = HOY_PROMO ? `
+  <aside class="banner-promo" role="note">
+    <strong>Hoy es día de promo</strong>
+    <span>Precios especiales en granizados, cócteles y Coronitas</span>
+  </aside>` : "";
+
+main.innerHTML = BANNER_PROMO + CARTA.map(s => `
   <section id="${s.id}" class="${s.tono}">
     <h2>${s.titulo}</h2>
     ${GOTAS}

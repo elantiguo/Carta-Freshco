@@ -9,7 +9,7 @@ const RAIZ = path.join(__dirname, "..");
 const PUERTO = process.env.PORT || 3000;
 
 const store = crearStore();
-const productos = cargarCarta();
+const carta = cargarCarta();
 const app = express();
 
 app.set("trust proxy", 1); // Render está detrás de un proxy (IP real y HTTPS)
@@ -46,13 +46,16 @@ function validarPedido(body) {
   if (!Array.isArray(body.items) || !body.items.length) return { error: "El pedido está vacío" };
   if (body.items.length > 40) return { error: "Demasiados productos distintos" };
 
+  // Los precios se calculan aquí (fecha de Colombia), nunca se toman del cliente
+  const promo = carta.esDiaPromo();
   const items = [];
   for (const it of body.items) {
-    const prod = productos.get(String(it && it.id));
+    const prod = carta.producto(it && it.id);
     const cantidad = Number(it && it.cantidad);
     if (!prod) return { error: `Producto no encontrado: ${String(it && it.id).slice(0, 60)}` };
     if (!Number.isInteger(cantidad) || cantidad < 1 || cantidad > 50) return { error: "Cantidad inválida" };
-    items.push({ id: String(it.id), ...prod, cantidad });
+    const precio = carta.precio(prod.precios, { domicilio: tipo === "domicilio", promo });
+    items.push({ id: String(it.id), nombre: prod.nombre, seccion: prod.seccion, imagen: prod.imagen, precio, cantidad });
   }
 
   const unidades = items.reduce((a, i) => a + i.cantidad, 0);
@@ -69,7 +72,8 @@ function validarPedido(body) {
       notas: texto(body.notas, 120),
       items,
       unidades,
-      total
+      total,
+      promo
     }
   };
 }

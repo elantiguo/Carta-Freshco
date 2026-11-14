@@ -34,6 +34,7 @@
           <div id="campo-domicilio" class="campo-modal oculto">
             <label><span>Tu nombre: *</span><input type="text" id="pedido-nombre" placeholder="Nombre completo" maxlength="40"></label>
             <label><span>Dirección actual obligatoria: *</span><input type="text" id="pedido-dir" placeholder="Ej: Carrera 15 # 45-20" maxlength="80"></label>
+            <p class="aviso-domicilio">Los granizados a domicilio cuestan diferente; el total ya lo incluye.</p>
           </div>
           <label><span>Notas adicionales (opcional):</span><input type="text" id="pedido-notas" placeholder="Ej: Con bastante hielo" maxlength="120"></label>
         </div>
@@ -59,6 +60,13 @@
   const abrirModal = () => { restaurarModal(); renderModalCuerpo(); modal.classList.remove("oculto"); document.body.style.overflow = "hidden"; };
   const cerrarModal = () => { modal.classList.add("oculto"); document.body.style.overflow = ""; };
 
+  const fmt = n => "$" + Number(n).toLocaleString("es-CO");
+  function precioLinea(it) {
+    const u = Pedido.precioUnitario(it.id);
+    if (!u) return "";
+    return `<span class="modal-item-precio">${fmt(u * it.cantidad)}${it.cantidad > 1 ? ` <small>(${fmt(u)} c/u)</small>` : ""}</span>`;
+  }
+
   function renderModalCuerpo() {
     const items = Pedido.obtenerItems();
     if (!items.length) {
@@ -72,7 +80,7 @@
       return `<li class="modal-item">
         ${img ? `<img src="${encodeURI(img)}" class="modal-thumb" alt="${esc(it.nombre)}" loading="lazy">` : ""}
         <div class="modal-item-info"><strong>${esc(it.nombre)}</strong>${it.seccion ? `<small>${esc(it.seccion)}</small>` : ""}
-          ${it.precio ? `<span class="modal-item-precio">$${(it.precio * it.cantidad).toLocaleString("es-CO")}</span>` : ""}</div>
+          ${precioLinea(it)}</div>
         <div class="modal-item-ctrl">
           <button type="button" class="btn-m-menos" data-id="${esc(it.id)}" aria-label="Quitar">${ICONS.minus}</button>
           <span class="m-cant">${it.cantidad}</span>
@@ -102,6 +110,7 @@
     dom.querySelectorAll(".btn-tipo").forEach(b => b.classList.remove("activo"));
     btn.classList.add("activo");
     tipoEntrega = btn.dataset.tipo;
+    Pedido.cambiarTipo(tipoEntrega);
     campoLocal.classList.toggle("oculto", tipoEntrega !== "local");
     campoDomicilio.classList.toggle("oculto", tipoEntrega !== "domicilio");
   }));

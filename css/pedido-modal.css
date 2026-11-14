@@ -117,3 +117,6 @@
   color: #05060c; background: var(--hielo); box-shadow: 0 0 24px rgba(127, 212, 255, .6);
 }
 
+
+.modal-item-precio small { color: var(--tenue); font-weight: 500; font-size: 12.5px; }
+.aviso-domicilio { margin: 0; font-size: 13px; color: var(--ambar); }
