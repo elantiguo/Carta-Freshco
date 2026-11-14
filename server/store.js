@@ -50,9 +50,11 @@ function crearStoreArchivo(zona) {
         .sort((a, b) => b.numero - a.numero)
         .slice(0, limite);
     },
-    async cambiarEstado(id, estado) {
+    // cambios: campos extra a guardar (datos corregidos, verificación, motivo...)
+    async cambiarEstado(id, estado, cambios = {}) {
       const p = pedidos.find(x => x.id === id);
       if (!p) return null;
+      Object.assign(p, cambios);
       p.estado = estado;
       p.actualizado = new Date().toISOString();
       await persistir();
@@ -138,10 +140,11 @@ function crearStorePostgres(url, zona) {
         : await pool.query("SELECT * FROM pedidos ORDER BY numero DESC LIMIT $1", [limite]);
       return rows.map(aPedido);
     },
-    async cambiarEstado(id, estado) {
+    // cambios: campos extra a guardar (datos corregidos, verificación, motivo...)
+    async cambiarEstado(id, estado, cambios = {}) {
       const { rows } = await pool.query(
-        "UPDATE pedidos SET estado = $2, actualizado = now() WHERE id = $1 RETURNING *",
-        [id, estado]
+        "UPDATE pedidos SET estado = $2, datos = datos || $3::jsonb, actualizado = now() WHERE id = $1 RETURNING *",
+        [id, estado, JSON.stringify(cambios)]
       );
       return rows[0] ? aPedido(rows[0]) : null;
     },

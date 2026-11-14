@@ -33,7 +33,8 @@
           </div>
           <div id="campo-domicilio" class="campo-modal oculto">
             <label><span>Tu nombre: *</span><input type="text" id="pedido-nombre" placeholder="Nombre completo" maxlength="40"></label>
-            <label><span>Dirección actual obligatoria: *</span><input type="text" id="pedido-dir" placeholder="Ej: Carrera 15 # 45-20" maxlength="80"></label>
+            <label><span>Dirección actual obligatoria: *</span><input type="text" id="pedido-dir" placeholder="Ej: Carrera 15 # 45-20, apto 302" maxlength="80" autocomplete="street-address"></label>
+            <label><span>Celular para llamarte: *</span><input type="tel" id="pedido-tel" placeholder="Ej: 300 123 4567" maxlength="16" inputmode="tel" autocomplete="tel"></label>
             <div class="ubicacion-caja" id="ubicacion-caja" data-estado="pendiente">
               <span class="ubicacion-icono" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.6"/></svg></span>
               <span id="ubicacion-estado" class="ubicacion-texto">Activa tu ubicación para que el domiciliario te encuentre.</span>
@@ -60,6 +61,7 @@
   const modalTotalPrecio = document.getElementById("modal-total-precio"), inputNotas = document.getElementById("pedido-notas");
   const campoLocal = document.getElementById("campo-local"), campoDomicilio = document.getElementById("campo-domicilio");
   const inputNombre = document.getElementById("pedido-nombre"), inputDir = document.getElementById("pedido-dir");
+  const inputTel = document.getElementById("pedido-tel");
   let tipoEntrega = "local", mesaSeleccionada = "1";
 
   const abrirModal = () => { restaurarModal(); renderModalCuerpo(); modal.classList.remove("oculto"); document.body.style.overflow = "hidden"; };
@@ -206,6 +208,7 @@
     if (tipoEntrega === "domicilio") {
       if (!inputNombre.value.trim()) { inputNombre.focus(); return alert("Por favor ingresa tu nombre para el domicilio."); }
       if (!inputDir.value.trim()) { inputDir.focus(); return alert("Por favor ingresa la dirección actual para la entrega."); }
+      if (!normalizarTelefono(inputTel.value)) { inputTel.focus(); return alert("Escribe un número de celular válido de 10 dígitos (ej: 300 123 4567) para poder llamarte y confirmar tu pedido."); }
       if (!ubicacion) {
         btnEnviar.disabled = true;
         await pedirUbicacion();
@@ -214,7 +217,7 @@
       }
     }
     const domicilio = tipoEntrega === "domicilio";
-    const opts = { tipo: tipoEntrega, mesa: mesaSeleccionada, nombre: inputNombre.value, direccion: inputDir.value, notas: inputNotas.value, ubicacion: domicilio ? ubicacion : null };
+    const opts = { tipo: tipoEntrega, mesa: mesaSeleccionada, nombre: inputNombre.value, direccion: inputDir.value, telefono: domicilio ? inputTel.value : "", notas: inputNotas.value, ubicacion: domicilio ? ubicacion : null };
     btnEnviar.disabled = true;
     btnEnviar.querySelector("span").textContent = "Enviando...";
     try {

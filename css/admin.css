@@ -201,3 +201,45 @@ button { font: inherit; }
   font-family: var(--f-nombre); font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: .04em;
 }
 .btn-mapa:hover { background: rgba(61, 220, 132, .25); }
+
+/* Teléfono y verificación en la tarjeta */
+.pedido-destino .tel a { color: var(--hielo); font-weight: 600; text-decoration: none; }
+.verif { display: inline-block; margin-top: 6px; padding: 2px 10px; border-radius: 999px; font-family: var(--f-nombre); font-weight: 700; font-size: 12.5px; text-transform: uppercase; letter-spacing: .04em; }
+.verif.ok { color: #3ddc84; border: 1px solid rgba(61, 220, 132, .5); }
+.verif.pendiente { color: var(--ambar); border: 1px dashed var(--ambar); }
+.btn-revisar { --c-estado-sig: var(--ambar); }
+
+/* Ventana de revisión de domicilio */
+.dlg {
+  width: min(520px, calc(100% - 24px)); max-height: calc(100% - 24px); padding: 0;
+  background: #0c0e18; color: var(--texto); border: 1px solid var(--linea); border-radius: 20px;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, .7), 0 0 30px rgba(164, 91, 255, .25);
+}
+.dlg::backdrop { background: rgba(4, 5, 10, .8); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+.dlg form { display: flex; flex-direction: column; gap: 12px; padding: 18px 20px 20px; }
+.dlg-cabecera { display: flex; align-items: center; justify-content: space-between; }
+.dlg-cabecera h2 { margin: 0; font-family: var(--f-nombre); font-size: 24px; text-transform: uppercase; letter-spacing: .05em; }
+.dlg-cerrar { width: 34px; height: 34px; border-radius: 50%; border: 1px solid var(--linea); background: transparent; color: var(--tenue); font-size: 22px; line-height: 1; cursor: pointer; }
+.dlg-ayuda { margin: 0; color: var(--tenue); font-size: 14px; }
+.rev-resumen { padding: 10px 12px; border-radius: 12px; background: rgba(255, 255, 255, .04); border: 1px solid var(--linea); font-size: 14px; line-height: 1.45; }
+.dlg label span { display: block; font-size: 13px; color: var(--tenue); margin-bottom: 4px; }
+.dlg input {
+  width: 100%; padding: 10px 12px; background: rgba(0, 0, 0, .45); border: 1px solid var(--linea);
+  border-radius: 10px; color: #fff; font-family: var(--f-cuerpo); font-size: 16px;
+}
+.dlg input:focus { outline: 1px solid var(--hielo); border-color: var(--hielo); }
+.dlg input.invalido { border-color: #ff5c6d; }
+.rev-contacto { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn-contacto {
+  flex: 1; min-width: 110px; display: flex; align-items: center; justify-content: center; text-align: center; padding: 10px 12px; border-radius: 11px; text-decoration: none;
+  font-family: var(--f-nombre); font-weight: 700; font-size: 15px; text-transform: uppercase; letter-spacing: .04em;
+  background: rgba(127, 212, 255, .12); border: 1px solid rgba(127, 212, 255, .5); color: var(--hielo);
+}
+.btn-contacto.wa { background: rgba(37, 211, 102, .12); border-color: rgba(37, 211, 102, .5); color: #3ddc84; }
+.btn-contacto.mapa { background: rgba(255, 255, 255, .05); border-color: var(--linea); color: var(--texto); }
+.btn-contacto.deshabilitado { opacity: .35; pointer-events: none; }
+.rev-motivo { padding-top: 4px; border-top: 1px dashed var(--linea); }
+.dlg-acciones { display: flex; gap: 8px; flex-wrap: wrap; }
+.dlg-acciones button { padding: 11px 14px; border-radius: 11px; cursor: pointer; font-family: var(--f-nombre); font-weight: 700; font-size: 15px; text-transform: uppercase; letter-spacing: .03em; }
+.dlg-acciones .btn-primario { flex: 1; min-width: 170px; font-size: 16px; }
+.dlg-acciones button:disabled { opacity: .5; cursor: wait; }

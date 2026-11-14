@@ -86,12 +86,12 @@ const Pedido = {
   },
 
   // Envía el pedido al servidor. Devuelve { id, numero }.
-  async enviar({ tipo = "local", mesa = "1", nombre = "", direccion = "", notas = "", ubicacion = null } = {}) {
+  async enviar({ tipo = "local", mesa = "1", nombre = "", direccion = "", telefono = "", notas = "", ubicacion = null } = {}) {
     const items = this.obtenerItems().map(it => ({ id: it.id, cantidad: it.cantidad }));
     const res = await fetch("/api/pedidos", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ tipo, mesa, nombre, direccion, notas, items, ubicacion })
+      body: JSON.stringify({ tipo, mesa, nombre, direccion, telefono, notas, items, ubicacion })
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || "No se pudo enviar el pedido");

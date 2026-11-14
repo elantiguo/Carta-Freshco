@@ -55,6 +55,8 @@ function validarPedido(body) {
   const nombre = texto(body.nombre, 40);
   const direccion = texto(body.direccion, 80);
   if (tipo === "domicilio" && (!nombre || !direccion)) return { error: "Nombre y dirección son obligatorios para domicilio" };
+  const telefono = tipo === "domicilio" ? carta.telefono(body.telefono) : null;
+  if (tipo === "domicilio" && !telefono) return { error: "Escribe un número de celular válido de 10 dígitos para poder llamarte" };
 
   if (!Array.isArray(body.items) || !body.items.length) return { error: "El pedido está vacío" };
   if (body.items.length > 40) return { error: "Demasiados productos distintos" };
@@ -82,6 +84,8 @@ function validarPedido(body) {
       mesa,
       nombre: tipo === "domicilio" ? nombre : "",
       direccion: tipo === "domicilio" ? direccion : "",
+      telefono: telefono || "",
+      verificado: null, // domicilios: el local revisa nombre, dirección y teléfono antes de aceptarlo
       notas: texto(body.notas, 120),
       ubicacion: tipo === "domicilio" ? validarUbicacion(body.ubicacion) : null,
       items,
@@ -170,12 +174,35 @@ app.get("/api/admin/dia/:fecha", auth.requiereAdmin, asyncRuta(async (req, res) 
   res.json(await store.listarPorDia(req.params.fecha));
 }));
 
+// Cambiar estado. En domicilios se pueden corregir nombre/dirección/teléfono y se exige
+// haber revisado los datos ("verificar": true) antes de pasarlo a preparación.
 app.patch("/api/admin/pedidos/:id", auth.requiereAdmin, asyncRuta(async (req, res) => {
-  const estado = req.body && req.body.estado;
+  const body = req.body || {};
+  const estado = body.estado;
   if (!ESTADOS.includes(estado)) return res.status(400).json({ error: "Estado inválido" });
-  const p = await store.cambiarEstado(req.params.id, estado);
-  if (!p) return res.status(404).json({ error: "Pedido no encontrado" });
-  res.json(p);
+  const actual = await store.obtener(req.params.id);
+  if (!actual) return res.status(404).json({ error: "Pedido no encontrado" });
+
+  const cambios = {};
+  if (actual.tipo === "domicilio") {
+    if (body.datos && typeof body.datos === "object") {
+      const nombre = texto(body.datos.nombre, 40);
+      const direccion = texto(body.datos.direccion, 80);
+      const telefono = carta.telefono(body.datos.telefono);
+      if (!nombre || !direccion) return res.status(400).json({ error: "Nombre y dirección no pueden quedar vacíos" });
+      if (!telefono) return res.status(400).json({ error: "Teléfono inválido (10 dígitos, celular o fijo)" });
+      Object.assign(cambios, { nombre, direccion, telefono });
+    }
+    if (body.verificar === true) cambios.verificado = { en: new Date().toISOString(), por: req.admin.u };
+    const avanza = ["preparando", "listo", "entregado"].includes(estado);
+    if (avanza && actual.estado === "nuevo" && !actual.verificado && !cambios.verificado) {
+      return res.status(409).json({ error: "Primero revisa y confirma los datos del domicilio" });
+    }
+  }
+  if (estado === "cancelado") cambios.motivo = texto(body.motivo, 120);
+  else if (actual.estado === "cancelado") cambios.motivo = ""; // al reabrir se borra el motivo
+
+  res.json(await store.cambiarEstado(req.params.id, estado, cambios));
 }));
 
 app.use("/api", (req, res) => res.status(404).json({ error: "Ruta no encontrada" }));

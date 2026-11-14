@@ -77,6 +77,33 @@
     </div>
   </section>
 
+  <!-- Revisión de un domicilio antes de aceptarlo -->
+  <dialog id="dlg-revision" class="dlg" aria-labelledby="rev-titulo">
+    <form id="form-revision" method="dialog" novalidate>
+      <div class="dlg-cabecera">
+        <h2 id="rev-titulo">Revisar domicilio</h2>
+        <button type="button" class="dlg-cerrar" id="rev-cerrar" aria-label="Cerrar">×</button>
+      </div>
+      <p class="dlg-ayuda">Llama o escribe al cliente si algo no cuadra. Puedes corregir los datos antes de aceptar.</p>
+      <div id="rev-resumen" class="rev-resumen"></div>
+      <label><span>Nombre</span><input id="rev-nombre" maxlength="40" required></label>
+      <label><span>Dirección</span><input id="rev-direccion" maxlength="80" required></label>
+      <label><span>Celular</span><input id="rev-telefono" type="tel" inputmode="tel" maxlength="16" required></label>
+      <div class="rev-contacto">
+        <a id="rev-llamar" class="btn-contacto" href="#">Llamar</a>
+        <a id="rev-whatsapp" class="btn-contacto wa" href="#" target="_blank" rel="noopener noreferrer">WhatsApp</a>
+        <a id="rev-mapa" class="btn-contacto mapa" href="#" target="_blank" rel="noopener noreferrer">Ver en el mapa</a>
+      </div>
+      <label class="rev-motivo"><span>Motivo si lo rechazas (lo verá el cliente)</span><input id="rev-motivo" maxlength="120" placeholder="Ej: Dirección fuera de nuestra zona"></label>
+      <p id="rev-error" class="login-error" role="alert"></p>
+      <div class="dlg-acciones">
+        <button type="button" id="rev-rechazar" class="btn-cancelar">Rechazar</button>
+        <button type="button" id="rev-guardar" class="btn-icono">Guardar sin aceptar</button>
+        <button type="button" id="rev-aceptar" class="btn-primario">Aceptar domicilio</button>
+      </div>
+    </form>
+  </dialog>
+
   <script src="js/draw.js"></script>
   <script src="js/data.js"></script>
   <script src="js/admin.js"></script>

@@ -35,6 +35,8 @@
     .pasos li.actual { font-weight: 600; }
     .cancelado { margin-top: 8px; color: #ff5c6d; }
     .oculto { display: none !important; }
+    .revision { margin-top: 12px; padding: 10px 12px; border-radius: 12px; font-size: 14.5px; background: rgba(255,185,46,.1); border: 1px solid rgba(255,185,46,.45); color: #ffd27a; }
+    .confirmado { margin-top: 10px; font-size: 14px; color: #3ddc84; font-weight: 500; }
     .ubic { border-color: rgba(37,211,102,.45); }
     .ubic-buscando { border-color: rgba(127,212,255,.45); }
     .ubic-error { border-color: rgba(255,92,109,.55); }
@@ -60,6 +62,7 @@ const ESTADOS = {
   cancelado:  { txt: "Cancelado",      paso: -1 }
 };
 const PASOS = ["Recibido", "Preparando", "Listo", "Entregado"];
+const telBonito = d => d && d.length === 10 ? `${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6)}` : String(d || "");
 const root = document.getElementById("root");
 const id = new URLSearchParams(location.search).get("id");
 
@@ -70,10 +73,15 @@ function render(p) {
     : `<span class="badge badge-dom">A domicilio</span>`;
   const extra = p.tipo !== "local" ? [
     p.nombre ? `<div class="fila"><strong>Cliente:</strong><span>${esc(p.nombre)}</span></div>` : "",
-    p.direccion ? `<div class="fila"><strong>Dirección:</strong><span>${esc(p.direccion)}</span></div>` : ""
+    p.direccion ? `<div class="fila"><strong>Dirección:</strong><span>${esc(p.direccion)}</span></div>` : "",
+    p.telefono ? `<div class="fila"><strong>Celular:</strong><span>${esc(telBonito(p.telefono))}</span></div>` : ""
   ].join("") : "";
+  // Domicilio recién hecho: el local revisa los datos antes de aceptarlo
+  const revision = p.tipo === "domicilio" && p.estado === "nuevo" && !p.verificado
+    ? `<p class="revision">Estamos revisando tus datos para confirmar el domicilio.${p.telefono ? ` Es posible que te llamemos al <b>${esc(telBonito(p.telefono))}</b>.` : ""}</p>`
+    : p.tipo === "domicilio" && p.verificado && p.estado !== "cancelado" ? `<p class="confirmado">Domicilio confirmado</p>` : "";
   const progreso = est.paso < 0
-    ? `<p class="cancelado">Este pedido fue cancelado. Pregunta en la barra si tienes dudas.</p>`
+    ? `<p class="cancelado">Este pedido fue cancelado.${p.motivo ? ` Motivo: ${esc(p.motivo)}` : " Pregunta en la barra si tienes dudas."}</p>`
     : `<ol class="pasos">${PASOS.map((t, i) => `<li class="${i <= est.paso ? "hecho" : ""}${i === est.paso ? " actual" : ""}">${t}</li>`).join("")}</ol>`;
   const itemsHtml = p.items.map(it => {
     const img = it.imagen ? `<img src="${esc(encodeURI(it.imagen))}" alt="${esc(it.nombre)}" loading="lazy">` : "";
@@ -84,7 +92,7 @@ function render(p) {
   root.innerHTML = `
     <p class="titulo">Pedido #${esc(p.numero)}</p>
     <p class="sub">${new Date(p.creado).toLocaleString("es-CO", { dateStyle: "medium", timeStyle: "short" })}</p>
-    <div class="tarjeta"><p class="sec-titulo">Estado</p><p class="estado">${est.txt}</p>${progreso}</div>
+    <div class="tarjeta"><p class="sec-titulo">Estado</p><p class="estado">${est.txt}</p>${progreso}${revision}</div>
     <div class="tarjeta"><div class="modo">${modo}</div>${extra}</div>
     <div class="tarjeta"><p class="sec-titulo">Detalle del pedido</p>${itemsHtml}
       <p class="total">Total: ${p.unidades} ${p.unidades === 1 ? "producto" : "productos"}${total}</p>

@@ -167,19 +167,32 @@
     </span>`;
   }
 
+  const telLink = d => `tel:+57${d}`;
+  const waLink = d => `https://wa.me/57${d}`;
+  function telefonoHtml(p) {
+    if (!p.telefono) return "";
+    return `<small class="tel">Cel: <a href="${telLink(p.telefono)}">${esc(formatearTelefono(p.telefono))}</a></small>`;
+  }
+  function verificacionHtml(p) {
+    if (p.verificado) return `<span class="verif ok">Datos verificados${p.verificado.por ? ` por ${esc(p.verificado.por)}` : ""}</span>`;
+    return p.estado === "nuevo" ? `<span class="verif pendiente">Datos sin revisar</span>` : "";
+  }
+
   function tarjeta(p) {
     const est = ESTADOS[p.estado] || ESTADOS.nuevo;
     const destino = p.tipo === "local"
       ? `<strong class="mesa">Mesa ${esc(p.mesa)}</strong><small>En el local</small>`
-      : `<strong class="dom">Domicilio</strong><small>${esc(p.nombre)}</small><small>${esc(p.direccion)}</small>${ubicacionHtml(p)}`;
+      : `<strong class="dom">Domicilio</strong><small>${esc(p.nombre)}</small><small>${esc(p.direccion)}</small>${telefonoHtml(p)}${verificacionHtml(p)}${ubicacionHtml(p)}`;
     const items = p.items.map(it => `
       <li>
         ${it.imagen ? `<img src="${esc(encodeURI(it.imagen))}" alt="" loading="lazy">` : ""}
         <span class="nom"><strong>${esc(it.nombre)}</strong><small>${esc(it.seccion)}${it.precio ? ` · $${Number(it.precio).toLocaleString("es-CO")} c/u` : ""}</small></span>
         <span class="cant">${it.cantidad}x</span>
       </li>`).join("");
+    const porRevisar = p.tipo === "domicilio" && p.estado === "nuevo" && !p.verificado;
     const acciones = [
-      est.sig ? `<button type="button" class="btn-avanzar" data-id="${esc(p.id)}" data-a="${est.sig}">${est.accion}</button>` : "",
+      porRevisar ? `<button type="button" class="btn-avanzar btn-revisar" data-revisar="${esc(p.id)}">Revisar datos</button>`
+        : est.sig ? `<button type="button" class="btn-avanzar" data-id="${esc(p.id)}" data-a="${est.sig}">${est.accion}</button>` : "",
       ACTIVOS.includes(p.estado) ? `<button type="button" class="btn-cancelar" data-id="${esc(p.id)}" data-a="cancelado">Cancelar</button>` : ""
     ].join("");
 
@@ -226,20 +239,101 @@
   });
 
   lista.addEventListener("click", async e => {
+    const rev = e.target.closest("button[data-revisar]");
+    if (rev) return abrirRevision(rev.dataset.revisar);
     const b = e.target.closest("button[data-a]");
     if (!b) return;
-    if (b.dataset.a === "cancelado" && !confirm("¿Cancelar este pedido?")) return;
+    const cuerpo = { estado: b.dataset.a };
+    if (b.dataset.a === "cancelado") {
+      const motivo = prompt("¿Cancelar este pedido?\n\nMotivo (opcional, lo verá el cliente):", "");
+      if (motivo === null) return;
+      cuerpo.motivo = motivo;
+    }
     b.disabled = true;
     try {
       const act = await api(`/api/admin/pedidos/${encodeURIComponent(b.dataset.id)}`, {
         method: "PATCH",
-        body: JSON.stringify({ estado: b.dataset.a })
+        body: JSON.stringify(cuerpo)
       });
       pedidos = pedidos.map(p => (p.id === act.id ? act : p));
       render();
     } catch (ex) {
       if (ex.message !== "Sesión expirada") alert(ex.message);
       b.disabled = false;
+    }
+  });
+
+  // ---------- Revisión de domicilios ----------
+  const dlg = $("dlg-revision");
+  const revNombre = $("rev-nombre"), revDir = $("rev-direccion"), revTel = $("rev-telefono");
+  const revMotivo = $("rev-motivo"), revError = $("rev-error");
+  let revId = null;
+
+  function actualizarContacto() {
+    const d = normalizarTelefono(revTel.value);
+    for (const [el, href] of [[$("rev-llamar"), d && telLink(d)], [$("rev-whatsapp"), d && waLink(d)]]) {
+      el.classList.toggle("deshabilitado", !href);
+      if (href) el.href = href; else el.removeAttribute("href");
+    }
+    revTel.classList.toggle("invalido", !d);
+  }
+
+  function abrirRevision(id) {
+    const p = pedidos.find(x => x.id === id);
+    if (!p) return;
+    revId = id;
+    revError.textContent = "";
+    revMotivo.value = "";
+    revNombre.value = p.nombre || "";
+    revDir.value = p.direccion || "";
+    revTel.value = p.telefono ? formatearTelefono(p.telefono) : "";
+    const items = p.items.map(it => `${it.cantidad}x ${esc(it.nombre)}`).join(", ");
+    $("rev-resumen").innerHTML = `<b>Pedido #${esc(p.numero)}</b> · ${hora(p.creado)} · ${items}${p.total ? ` · <b>$${Number(p.total).toLocaleString("es-CO")}</b>` : ""}${p.notas ? `<br><i>Nota: ${esc(p.notas)}</i>` : ""}`;
+    const mapa = $("rev-mapa");
+    if (p.ubicacion) {
+      mapa.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${p.ubicacion.lat},${p.ubicacion.lng}`)}`;
+      mapa.textContent = "Ver ubicación en el mapa";
+    } else {
+      mapa.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(p.direccion || "")}`;
+      mapa.textContent = "Buscar dirección en el mapa";
+    }
+    actualizarContacto();
+    dlg.showModal();
+  }
+
+  async function enviarRevision(cuerpo, boton) {
+    revError.textContent = "";
+    dlg.querySelectorAll(".dlg-acciones button").forEach(x => { x.disabled = true; });
+    try {
+      const act = await api(`/api/admin/pedidos/${encodeURIComponent(revId)}`, { method: "PATCH", body: JSON.stringify(cuerpo) });
+      pedidos = pedidos.map(p => (p.id === act.id ? act : p));
+      render();
+      dlg.close();
+    } catch (ex) {
+      if (ex.message !== "Sesión expirada") revError.textContent = ex.message;
+    } finally {
+      dlg.querySelectorAll(".dlg-acciones button").forEach(x => { x.disabled = false; });
+    }
+  }
+
+  const datosRevision = () => ({ nombre: revNombre.value, direccion: revDir.value, telefono: revTel.value });
+  function datosValidos() {
+    if (!revNombre.value.trim() || !revDir.value.trim()) { revError.textContent = "Nombre y dirección no pueden quedar vacíos."; return false; }
+    if (!normalizarTelefono(revTel.value)) { revError.textContent = "El celular debe tener 10 dígitos (ej: 300 123 4567)."; revTel.focus(); return false; }
+    return true;
+  }
+
+  revTel.addEventListener("input", actualizarContacto);
+  $("rev-cerrar").addEventListener("click", () => dlg.close());
+  $("rev-aceptar").addEventListener("click", () => {
+    if (datosValidos()) enviarRevision({ estado: "preparando", verificar: true, datos: datosRevision() });
+  });
+  $("rev-guardar").addEventListener("click", () => {
+    if (datosValidos()) enviarRevision({ estado: "nuevo", datos: datosRevision() });
+  });
+  $("rev-rechazar").addEventListener("click", () => {
+    if (confirm("¿Rechazar este domicilio? El cliente verá el pedido como cancelado.")) {
+      enviarRevision({ estado: "cancelado", motivo: revMotivo.value });
     }
   });
 
@@ -323,7 +417,7 @@
 
     const filas = peds.map(p => {
       const est = ESTADOS[p.estado] || ESTADOS.nuevo;
-      const destino = p.tipo === "local" ? `Mesa ${esc(p.mesa)}` : `Domicilio · ${esc(p.nombre)}`;
+      const destino = p.tipo === "local" ? `Mesa ${esc(p.mesa)}` : `Domicilio · ${esc(p.nombre)}${p.telefono ? ` · ${esc(formatearTelefono(p.telefono))}` : ""}`;
       const items = p.items.map(it => `${it.cantidad}x ${esc(it.nombre)}`).join(", ");
       return `<tr class="${p.estado === "cancelado" ? "cancelado" : ""}">
         <td><b>#${esc(p.numero)}</b><br><small>${hora(p.creado)}</small></td>

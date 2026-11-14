@@ -122,3 +122,16 @@ function precioDe(precios, { domicilio = false, promo = esDiaPromo() } = {}) {
   }
   return promo && precios.promo != null ? precios.promo : precios.normal;
 }
+
+// ---------- Teléfono de contacto (domicilios) ----------
+// Acepta "300 123 4567", "+57 300-123-4567", "6011234567"... Devuelve 10 dígitos o null.
+// Válido: celular (empieza por 3) o fijo nacional (empieza por 60).
+function normalizarTelefono(t) {
+  let d = String(t || "").replace(/\D/g, "");
+  if (d.length === 12 && d.startsWith("57")) d = d.slice(2);
+  return /^(3\d{9}|60\d{8})$/.test(d) ? d : null;
+}
+
+function formatearTelefono(d) {
+  return d && d.length === 10 ? `${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6)}` : String(d || "");
+}
