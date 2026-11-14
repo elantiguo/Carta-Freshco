@@ -57,8 +57,13 @@ function crearStoreArchivo() {
 
 function crearStorePostgres(url) {
   const { Pool } = require("pg");
+  // pg 8 ya trata require/prefer/verify-ca como verify-full; se explicita para evitar el aviso.
+  url = url.replace(/([?&]sslmode=)(require|prefer|verify-ca)\b/, "$1verify-full");
+  // Si la URL ya indica sslmode (Neon usa sslmode=require) se respeta tal cual.
   const local = /localhost|127\.0\.0\.1/.test(url);
-  const pool = new Pool({ connectionString: url, ssl: local ? false : { rejectUnauthorized: false } });
+  const ssl = /[?&]sslmode=/.test(url) ? undefined : local ? false : { rejectUnauthorized: false };
+  const pool = new Pool({ connectionString: url, ssl, max: 5, idleTimeoutMillis: 30000 });
+  pool.on("error", err => console.error("[store] Error en conexión inactiva de PostgreSQL:", err.message));
 
   const aPedido = r => ({
     ...r.datos,

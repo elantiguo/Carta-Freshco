@@ -19,3 +19,5 @@ desktop.ini
 node_modules/
 data/
 .env
+.neon
+.env.local
