@@ -1,0 +1,57 @@
+/* Controles inline en la carta y barra flotante de pedidos */
+.contenedor-control { display: inline-flex; align-items: center; }
+.btn-agregar {
+  display: inline-flex; align-items: center; gap: 5px; padding: 5px 11px;
+  background: rgba(255, 255, 255, .06); border: 1px solid var(--acento, var(--labial));
+  border-radius: 999px; color: #fff; font-family: var(--f-nombre); font-size: 15px;
+  font-weight: 700; letter-spacing: .04em; text-transform: uppercase; cursor: pointer;
+  transition: background .2s, transform .15s, box-shadow .2s;
+}
+.btn-agregar:hover { background: color-mix(in srgb, var(--acento, var(--labial)) 28%, transparent); transform: translateY(-1px); }
+.contador-inline {
+  display: inline-flex; align-items: center; background: rgba(0, 0, 0, .55);
+  border: 1px solid var(--acento, var(--hielo)); border-radius: 999px; padding: 2px 4px;
+  box-shadow: 0 0 12px -3px var(--acento, var(--hielo));
+}
+.contador-inline button {
+  width: 26px; height: 26px; border-radius: 50%; border: none; background: transparent;
+  color: #fff; display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background .15s;
+}
+.contador-inline button:hover { background: rgba(255, 255, 255, .18); }
+.cant-num {
+  min-width: 22px; text-align: center; font-family: var(--f-nombre);
+  font-weight: 700; font-size: 16px; color: #fff;
+}
+.item-derecha { display: flex; flex-direction: column; align-items: flex-end; gap: 6px; }
+.nombres li { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.hoja { padding-bottom: 90px; }
+@media (max-width: 520px) { .nombres { columns: 1; } }
+
+/* Barra flotante inferior */
+.barra-pedido {
+  position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%);
+  width: min(calc(100% - 28px), 520px); z-index: 90;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px; border-radius: 18px; background: rgba(12, 14, 24, .88);
+  border: 1px solid var(--violeta); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, .6), 0 0 24px rgba(164, 91, 255, .35);
+  animation: subirBarra .3s ease-out;
+}
+@keyframes subirBarra { from { transform: translate(-50%, 25px); opacity: 0; } }
+.barra-info { display: flex; align-items: center; gap: 11px; }
+.icono-cart {
+  width: 38px; height: 38px; border-radius: 12px; background: rgba(164, 91, 255, .2);
+  border: 1px solid var(--violeta); display: flex; align-items: center; justify-content: center;
+  color: var(--hielo);
+}
+.barra-info strong { display: block; font-family: var(--f-nombre); font-size: 17px; line-height: 1.1; }
+.barra-sub { font-size: 14px; color: var(--hielo); font-family: var(--f-nombre); font-weight: 600; }
+.btn-ver-pedido {
+  display: inline-flex; align-items: center; gap: 6px; padding: 9px 16px; border-radius: 999px;
+  border: none; background: linear-gradient(100deg, var(--labial), var(--violeta));
+  color: #fff; font-family: var(--f-nombre); font-weight: 700; font-size: 16px;
+  letter-spacing: .04em; text-transform: uppercase; cursor: pointer;
+  box-shadow: 0 0 16px rgba(255, 35, 56, .45);
+}
+.oculto { display: none !important; }

@@ -1,3 +1,9 @@
+const CARTA_CONFIG = {
+  telefonoWhatsapp: "573123740187",
+  nombreNegocio: "Freshco",
+  baseUrlImagenes: "https://raw.githubusercontent.com/elantiguo/Carta-Freshco/main/"
+};
+
 const CARTA = [
   {
     id: "de-la-casa", atajo: "De la casa", tono: "violeta",
