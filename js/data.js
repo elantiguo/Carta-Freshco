@@ -33,17 +33,17 @@ const CARTA = [
     simple: true,
     foto: { src: "img/vaso-morado.jpg", alt: "Granizado Freshco con licor" },
     items: [
-      { nombre: "Ardiente", sabor: "Aguardiente con chile" },
-      { nombre: "Mora Blue", sabor: "Mora con curazao azul" },
-      { nombre: "Fresa Intensa", sabor: "Fresa concentrada con vodka" },
-      { nombre: "Mar Azul", sabor: "Curazao azul con cítricos" },
-      { nombre: "Caipirinha", sabor: "Lima y cachaza brasileña" },
-      { nombre: "Rosé Summer", sabor: "Vino rosado con frutas" },
-      { nombre: "Smirnoff", sabor: "Vodka con frutas cítricas" },
-      { nombre: "Sex On The Beach", sabor: "Durazno, naranja y vodka" },
-      { nombre: "Mulberry", sabor: "Mora silvestre con ron" },
-      { nombre: "Margarita", sabor: "Lima con tequila y sal" },
-      { nombre: "Jumanji", sabor: "Mix de frutas tropicales con ron" }
+      { nombre: "Ardiente" },
+      { nombre: "Mora Blue" },
+      { nombre: "Fresa Intensa" },
+      { nombre: "Mar Azul" },
+      { nombre: "Caipirinha" },
+      { nombre: "Rosé Summer" },
+      { nombre: "Smirnoff" },
+      { nombre: "Sex On The Beach" },
+      { nombre: "Mulberry" },
+      { nombre: "Margarita" },
+      { nombre: "Jumanji" }
     ]
   },
   {
@@ -52,13 +52,13 @@ const CARTA = [
     simple: true,
     foto: { src: "img/vaso-naranja.jpg", alt: "Granizado Freshco sin licor" },
     items: [
-      { nombre: "Mora Azul", sabor: "Mora azul natural" },
-      { nombre: "Maracuyá", sabor: "Fruta de la pasión" },
-      { nombre: "Mango Biche", sabor: "Mango verde" },
-      { nombre: "Bubbachella", sabor: "Tutti frutti" },
-      { nombre: "Sandía", sabor: "Sandía natural" },
-      { nombre: "Frambuesa", sabor: "Frambuesa natural" },
-      { nombre: "Fresa", sabor: "Fresa natural" }
+      { nombre: "Mora Azul" },
+      { nombre: "Maracuyá" },
+      { nombre: "Mango Biche" },
+      { nombre: "Bubbachella" },
+      { nombre: "Sandía" },
+      { nombre: "Frambuesa" },
+      { nombre: "Fresa" }
     ]
   },
   {
