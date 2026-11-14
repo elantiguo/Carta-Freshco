@@ -1,7 +1,7 @@
 const CARTA_CONFIG = {
   telefonoWhatsapp: "573123740187",
   nombreNegocio: "Freshco",
-  urlWeb: "https://carta-freshco.onrender.com",
+  urlWeb: "https://carta-freshco-j7at.onrender.com",
   baseUrlImagenes: "https://raw.githubusercontent.com/elantiguo/Carta-Freshco/main/",
   zonaHoraria: "America/Bogota",
   // Días de promoción (formato AAAA-MM-DD, hora de Colombia)

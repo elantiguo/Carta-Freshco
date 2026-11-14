@@ -95,6 +95,8 @@ const Pedido = {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(data.error || "No se pudo enviar el pedido");
+    // Sin número de pedido el servidor no lo guardó (p. ej. una dirección sin servidor): no vaciar el carrito
+    if (!data.id || !data.numero) throw new Error("No se pudo enviar el pedido. Recarga la página e intenta de nuevo.");
     try { localStorage.setItem(ULTIMO_KEY, data.id); } catch (e) {}
     return data;
   }

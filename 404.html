@@ -2,6 +2,13 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
+  <script>
+    // La dirección vieja (sitio estático de Render, sin servidor) pierde los pedidos:
+    // se redirige a la nueva conservando la página (QR y enlaces viejos siguen funcionando).
+    if (location.hostname === "carta-freshco.onrender.com") {
+      location.replace("https://carta-freshco-j7at.onrender.com" + location.pathname + location.search + location.hash);
+    }
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>404 - Carta Freshco</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
