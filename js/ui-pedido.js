@@ -37,8 +37,8 @@
             <label><span>Celular para llamarte: *</span><input type="tel" id="pedido-tel" placeholder="Ej: 300 123 4567" maxlength="16" inputmode="tel" autocomplete="tel"></label>
             <div class="ubicacion-caja" id="ubicacion-caja" data-estado="pendiente">
               <span class="ubicacion-icono" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.6"/></svg></span>
-              <span id="ubicacion-estado" class="ubicacion-texto">Activa tu ubicación para que el domiciliario te encuentre.</span>
-              <button type="button" id="btn-ubicacion" class="btn-ubicacion">Activar</button>
+              <span id="ubicacion-estado" class="ubicacion-texto">Comparte tu ubicación para que el domiciliario te encuentre más rápido.</span>
+              <button type="button" id="btn-ubicacion" class="btn-ubicacion">Compartir mi ubicación</button>
             </div>
             <p class="aviso-domicilio">Los granizados a domicilio cuestan diferente; el total ya lo incluye.</p>
           </div>
@@ -123,7 +123,7 @@
     if (tipoEntrega === "domicilio") {
       // En celulares pequeños los datos de domicilio quedan abajo: se desplaza hasta ellos
       dom.querySelector(".selector-tipo").scrollIntoView({ block: "start", behavior: "smooth" });
-      if (!ubicacion) pedirUbicacion();
+      if (!ubicacion) prepararUbicacion();
     }
   }));
 
@@ -162,15 +162,40 @@
         estadoUbic("ok", `Ubicación activada (precisión ±${Math.round(pos.coords.accuracy)} m)`, null);
         return ubicacion;
       }, err => {
-        const negado = err.code === err.PERMISSION_DENIED;
-        estadoUbic("error", negado
-          ? "Ubicación bloqueada. Actívala en los permisos del navegador para este sitio y vuelve a intentar."
-          : "No pudimos obtener tu ubicación. Revisa que la ubicación del celular esté encendida.", "Reintentar");
+        if (err.code === err.PERMISSION_DENIED) mostrarBloqueo();
+        else estadoUbic("error", "No pudimos obtener tu ubicación. Revisa que la Ubicación (GPS) del celular esté encendida.", "Intentar de nuevo");
         return null;
       })
       .finally(() => { pidiendoUbic = null; });
     return pidiendoUbic;
   }
+
+  function mostrarBloqueo() {
+    estadoUbic("error", `Ubicación bloqueada. ${instruccionesUbicacion()}`, "Ya la activé, intentar de nuevo");
+  }
+
+  // Al elegir domicilio: si ya hay permiso se toma sola; si está bloqueada se explican los pasos;
+  // si no, se muestra el botón "Compartir mi ubicación" (el permiso se pide al tocarlo).
+  let vigilandoPermiso = false;
+  async function prepararUbicacion() {
+    if (ubicacion || pidiendoUbic) return;
+    if (!("geolocation" in navigator)) {
+      return estadoUbic("error", "Tu navegador no permite compartir la ubicación. Escribe bien la dirección.", null);
+    }
+    if (enNavegadorDeApp()) return estadoUbic("error", instruccionesUbicacion(), "Intentar de todos modos");
+    const estado = await estadoPermisoUbicacion();
+    if (!vigilandoPermiso && navigator.permissions && navigator.permissions.query) {
+      vigilandoPermiso = true;
+      // Si el cliente la activa en los ajustes y vuelve, se toma automáticamente
+      navigator.permissions.query({ name: "geolocation" }).then(st => {
+        st.onchange = () => { if (st.state === "granted" && !ubicacion && tipoEntrega === "domicilio") pedirUbicacion(); };
+      }, () => {});
+    }
+    if (estado === "granted") return pedirUbicacion();
+    if (estado === "denied") return mostrarBloqueo();
+    estadoUbic("pendiente", "Comparte tu ubicación para que el domiciliario te encuentre más rápido.", "Compartir mi ubicación");
+  }
+
   btnUbic.addEventListener("click", () => pedirUbicacion());
 
   dom.querySelectorAll(".btn-mesa").forEach(btn => btn.addEventListener("click", () => {

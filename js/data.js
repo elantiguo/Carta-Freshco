@@ -135,3 +135,29 @@ function normalizarTelefono(t) {
 function formatearTelefono(d) {
   return d && d.length === 10 ? `${d.slice(0, 3)} ${d.slice(3, 6)} ${d.slice(6)}` : String(d || "");
 }
+
+// ---------- Ubicación: permiso e instrucciones según el celular ----------
+// Estado del permiso: "granted", "denied", "prompt" o "desconocido" (navegadores sin Permissions API)
+function estadoPermisoUbicacion() {
+  if (!navigator.permissions || !navigator.permissions.query) return Promise.resolve("desconocido");
+  return navigator.permissions.query({ name: "geolocation" }).then(r => r.state, () => "desconocido");
+}
+
+// Navegadores dentro de apps (Instagram, Facebook, TikTok...) suelen no permitir la ubicación
+function enNavegadorDeApp() {
+  return /Instagram|FBAN|FBAV|FB_IAB|TikTok|musical_ly|Line\//i.test(navigator.userAgent);
+}
+
+function instruccionesUbicacion() {
+  const ua = navigator.userAgent;
+  if (enNavegadorDeApp()) {
+    return "Estás dentro de Instagram/Facebook/TikTok, que no deja compartir la ubicación. Toca el menú (⋮ o ···) y elige «Abrir en el navegador» (Chrome o Safari).";
+  }
+  if (/iPhone|iPad|iPod/i.test(ua)) {
+    return "En iPhone: toca «aA» junto a la dirección de la página → Configuración del sitio web → Ubicación → Permitir. Si no aparece: Ajustes → Privacidad y seguridad → Localización (activada) → Sitios web de Safari → «Mientras se usa».";
+  }
+  if (/Android/i.test(ua)) {
+    return "En Android: toca el candado o el ícono junto a la dirección de la página → Permisos → Ubicación → Permitir. Revisa también que la Ubicación del celular esté encendida (desliza desde arriba).";
+  }
+  return "Toca el candado o el ícono de ubicación en la barra de direcciones → Ubicación → Permitir, y vuelve a intentar.";
+}

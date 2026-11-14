@@ -144,3 +144,9 @@
 .modal-cabecera { position: sticky; top: 0; z-index: 2; background: #0c0e18; }
 .modal-pie { position: sticky; bottom: 0; z-index: 2; background: #0c0e18; padding-bottom: max(20px, env(safe-area-inset-bottom)); }
 .selector-tipo { scroll-margin-top: 84px; }
+
+/* Caja de ubicación: botón grande y visible; instrucciones legibles en celular */
+.ubicacion-caja { flex-wrap: wrap; align-items: flex-start; }
+.campo-modal .ubicacion-texto { flex: 1 1 200px; }
+.ubicacion-caja[data-estado="pendiente"] .btn-ubicacion, .ubicacion-caja[data-estado="error"] .btn-ubicacion { flex: 1 0 100%; padding: 11px 14px; font-size: 16px; }
+.ubicacion-caja[data-estado="pendiente"] { border-color: rgba(127, 212, 255, .5); background: rgba(127, 212, 255, .07); }

@@ -47,6 +47,7 @@
     .ubic { border-color: rgba(37,211,102,.45); }
     .ubic-buscando { border-color: rgba(127,212,255,.45); }
     .ubic-error { border-color: rgba(255,92,109,.55); }
+    .ubic-pendiente { border-color: rgba(127,212,255,.55); background: rgba(127,212,255,.06); }
     .ubic-texto { font-size: 15px; }
     .ubic-ok .ubic-texto { color: #3ddc84; font-weight: 500; }
     .ubic-error .ubic-texto { color: #ff8a96; }
@@ -59,6 +60,7 @@
 <img src="img/logo.webp" alt="Freshco" class="logo">
 <div id="ubic" class="oculto" aria-live="polite"></div>
 <div id="root"><div class="error">Cargando pedido...</div></div>
+<script src="js/data.js"></script>
 <script>
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const ESTADOS = {
@@ -181,12 +183,24 @@ function iniciarUbicacion() {
       if (vigilancia != null) navigator.geolocation.clearWatch(vigilancia);
       vigilancia = null;
       clearInterval(latido);
-      pintarUbic("error", err.code === err.PERMISSION_DENIED
-        ? "Ubicación bloqueada. Actívala en los permisos del navegador para este sitio."
-        : "No pudimos obtener tu ubicación. Revisa que el GPS esté encendido.", "Activar ubicación");
+      pintarUbic("error", `Ubicación bloqueada. ${instruccionesUbicacion()}`, "Ya la activé, intentar de nuevo");
     },
     { enableHighAccuracy: true, maximumAge: 10000 }
   );
+}
+
+// Domicilio en curso: si ya hay permiso se comparte sola; si está bloqueada se explican los
+// pasos; si no, botón visible "Compartir mi ubicación en vivo" (el permiso se pide al tocarlo).
+let seguimientoPreparado = false;
+async function prepararSeguimiento() {
+  if (ubicActiva || seguimientoPreparado) return;
+  seguimientoPreparado = true;
+  if (!("geolocation" in navigator)) return pintarUbic("error", "Tu navegador no permite compartir la ubicación.");
+  if (enNavegadorDeApp()) return pintarUbic("error", instruccionesUbicacion(), "Intentar de todos modos");
+  const estado = await estadoPermisoUbicacion();
+  if (estado === "granted") return iniciarUbicacion();
+  if (estado === "denied") return pintarUbic("error", `Ubicación bloqueada. ${instruccionesUbicacion()}`, "Ya la activé, intentar de nuevo");
+  pintarUbic("pendiente", "Comparte tu ubicación en vivo para que el domiciliario te encuentre más rápido.", "Compartir mi ubicación en vivo");
 }
 
 function detenerUbicacion() {
@@ -210,7 +224,7 @@ async function cargar() {
     if (!res.ok) throw new Error();
     const pedido = await res.json();
     const terminado = render(pedido);
-    if (pedido.tipo === "domicilio" && !terminado) iniciarUbicacion();
+    if (pedido.tipo === "domicilio" && !terminado) prepararSeguimiento();
     else detenerUbicacion();
     if (!terminado) setTimeout(cargar, 10000);
   } catch (e) {
