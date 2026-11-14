@@ -182,11 +182,18 @@ app.use("/api", (req, res) => res.status(404).json({ error: "Ruta no encontrada"
 
 // ---------- Archivos estáticos (solo lo público) ----------
 const estatico = { dotfiles: "ignore", maxAge: "1h" };
-app.use("/css", express.static(path.join(RAIZ, "css"), estatico));
-app.use("/js", express.static(path.join(RAIZ, "js"), estatico));
+// CSS, JS y páginas: el navegador debe confirmar la versión en cada visita ("no-cache" + ETag).
+// Si no cambió, el servidor responde 304 sin reenviarlo; si cambió, se descarga la nueva.
+// Así, tras publicar una actualización nadie se queda con un JS viejo.
+const revalidar = { ...estatico, maxAge: 0, setHeaders: res => res.set("Cache-Control", "no-cache") };
+app.use("/css", express.static(path.join(RAIZ, "css"), revalidar));
+app.use("/js", express.static(path.join(RAIZ, "js"), revalidar));
 app.use("/img", express.static(path.join(RAIZ, "img"), { ...estatico, maxAge: "7d" }));
 
-const pagina = archivo => (req, res) => res.sendFile(path.join(RAIZ, archivo));
+const pagina = archivo => (req, res) => {
+  if (!res.get("Cache-Control")) res.set("Cache-Control", "no-cache"); // /admin ya trae "no-store"
+  res.sendFile(path.join(RAIZ, archivo));
+};
 app.get(["/", "/index.html"], pagina("index.html"));
 app.get("/pedido.html", pagina("pedido.html"));
 app.get(["/admin", "/admin.html"], (req, res, next) => { res.set("Cache-Control", "no-store"); next(); }, pagina("admin.html"));
