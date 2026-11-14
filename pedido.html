@@ -28,6 +28,7 @@
     .item-cant { margin-left: auto; background: rgba(127,212,255,.12); border: 1px solid rgba(127,212,255,.4); border-radius: 999px; padding: 4px 13px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 17px; color: #7fd4ff; white-space: nowrap; flex-shrink: 0; }
     .total { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700; text-align: right; color: #7fd4ff; padding-top: 12px; }
     .error { text-align: center; padding: 60px 20px; color: #9aa6bb; font-size: 15px; }
+    .btn-volver { display: inline-block; margin-top: 15px; padding: 8px 18px; border-radius: 999px; background: rgba(255,255,255,.08); color: #fff; text-decoration: none; font-family: 'Barlow Condensed', sans-serif; font-size: 15px; }
   </style>
 </head>
 <body>
@@ -37,18 +38,24 @@
 const BASE = "https://raw.githubusercontent.com/elantiguo/Carta-Freshco/main/";
 const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
+function decodificar(p) {
+  if (!p) throw new Error("Vacío");
+  let s = p.replace(/-/g, "+").replace(/_/g, "/").replace(/ /g, "+");
+  while (s.length % 4) s += "=";
+  try {
+    const bin = atob(s);
+    try { return JSON.parse(decodeURIComponent(escape(bin))); } catch(e){}
+    try { return JSON.parse(decodeURIComponent(bin)); } catch(e){}
+    try { return JSON.parse(bin); } catch(e){}
+  } catch(e) {}
+  try { return JSON.parse(decodeURIComponent(p)); } catch(e){}
+  try { return JSON.parse(p); } catch(e){}
+  throw new Error("No parseable");
+}
+
 try {
   const p = new URLSearchParams(location.search).get("p");
-  if (!p) throw new Error("Sin parámetro");
-  let jsonStr = "";
-  try {
-    let s = p.replace(/-/g, "+").replace(/_/g, "/").replace(/ /g, "+");
-    while (s.length % 4) s += "=";
-    jsonStr = decodeURIComponent(escape(atob(s)));
-  } catch (err) {
-    jsonStr = decodeURIComponent(p);
-  }
-  const { t, m, nm, d, its = [], notas } = JSON.parse(jsonStr);
+  const { t, m, nm, d, its = [], notas } = decodificar(p);
 
   const modo = t === "local"
     ? `<span class="badge badge-local">En el local – Mesa ${esc(m)}</span>`
@@ -59,7 +66,7 @@ try {
     d  ? `<div class="fila"><strong>Dirección:</strong><span>${esc(d)}</span></div>` : ""
   ].join("") : "";
 
-  const totalU = its.reduce((a, i) => a + i.c, 0);
+  const totalU = its.reduce((a, i) => a + (Number(i.c) || 1), 0);
 
   const itemsHtml = its.map(it => {
     const img = it.i ? `<img src="${esc(BASE + encodeURI(it.i))}" alt="${esc(it.n)}" loading="lazy">` : "";
@@ -75,9 +82,8 @@ try {
     </div>
     ${notas ? `<div class="tarjeta"><p class="sec-titulo">Notas</p><p>${esc(notas)}</p></div>` : ""}`;
 } catch(e) {
-  document.getElementById("root").innerHTML = `<div class="error">No se pudo cargar el pedido.</div>`;
+  document.getElementById("root").innerHTML = `<div class="error"><p>No se pudo cargar el pedido.</p><a href="index.html" class="btn-volver">Ir a la carta</a></div>`;
 }
 </script>
 </body>
 </html>
-
