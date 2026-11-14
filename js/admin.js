@@ -228,6 +228,135 @@
     }
   });
 
+  // ---------- Pestañas: pedidos en curso / historial ----------
+  const vistaPedidos = $("vista-pedidos"), vistaHistorial = $("vista-historial");
+  document.querySelector(".vistas").addEventListener("click", e => {
+    const b = e.target.closest("button[data-vista]");
+    if (!b) return;
+    document.querySelectorAll(".vistas button").forEach(x => {
+      const on = x === b;
+      x.classList.toggle("activo", on);
+      x.setAttribute("aria-selected", String(on));
+    });
+    const hist = b.dataset.vista === "historial";
+    vistaPedidos.classList.toggle("oculto", hist);
+    vistaHistorial.classList.toggle("oculto", !hist);
+    if (hist) cargarHistorial();
+  });
+
+  // ---------- Historial y ventas ----------
+  const pesos = n => "$" + Math.round(Number(n) || 0).toLocaleString("es-CO");
+  const nombreDia = f => new Date(`${f}T12:00:00`)
+    .toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
+    .replace(/^./, c => c.toUpperCase());
+  const hoyCol = () => fechaColombia();
+  const haceDias = n => fechaColombia(new Date(Date.now() - n * 864e5));
+  let resumen = [];
+  let diaAbierto = null;
+
+  async function cargarHistorial() {
+    const cont = $("hist-dias-lista");
+    cont.innerHTML = `<p class="vacio">Cargando…</p>`;
+    try {
+      resumen = await api(`/api/admin/resumen?dias=${$("hist-dias").value}`);
+      renderHistorial();
+      if (diaAbierto && resumen.some(r => r.fecha === diaAbierto)) abrirDia(diaAbierto);
+    } catch (e) {
+      if (e.message !== "Sesión expirada") cont.innerHTML = `<p class="vacio">No se pudo cargar el historial: ${esc(e.message)}</p>`;
+    }
+  }
+
+  function kpi(titulo, filas) {
+    const total = filas.reduce((a, r) => a + r.total, 0);
+    const n = filas.reduce((a, r) => a + r.pedidos, 0);
+    return `<div class="kpi"><span>${titulo}</span><strong>${pesos(total)}</strong><small>${n} ${n === 1 ? "pedido" : "pedidos"}</small></div>`;
+  }
+
+  function renderHistorial() {
+    const hoy = hoyCol(), ayer = haceDias(1), hace7 = haceDias(6);
+    const sel = $("hist-dias");
+    $("hist-kpis").innerHTML = [
+      kpi("Hoy", resumen.filter(r => r.fecha === hoy)),
+      kpi("Ayer", resumen.filter(r => r.fecha === ayer)),
+      kpi("Últimos 7 días", resumen.filter(r => r.fecha >= hace7)),
+      kpi(sel.options[sel.selectedIndex].text.replace(/^./, c => c.toUpperCase()), resumen)
+    ].join("");
+
+    $("hist-dias-lista").innerHTML = resumen.length ? resumen.map(r => `
+      <div class="dia" data-fecha="${esc(r.fecha)}">
+        <button type="button" class="dia-cabecera" aria-expanded="false">
+          <span class="dia-fecha">${esc(nombreDia(r.fecha))}${r.fecha === hoy ? ` <em>Hoy</em>` : ""}</span>
+          <span class="dia-datos">
+            <span>${r.pedidos} ${r.pedidos === 1 ? "pedido" : "pedidos"} · ${r.unidades} prod.${r.cancelados ? ` · ${r.cancelados} cancel.` : ""}</span>
+            <strong>${pesos(r.total)}</strong>
+          </span>
+        </button>
+        <div class="dia-detalle oculto"></div>
+      </div>`).join("") : `<p class="vacio">Todavía no hay ventas en este período.</p>`;
+  }
+
+  function detalleDia(peds) {
+    // Productos vendidos ese día (sin cancelados)
+    const prods = new Map();
+    peds.filter(p => p.estado !== "cancelado").forEach(p => p.items.forEach(it => {
+      const r = prods.get(it.nombre) || { nombre: it.nombre, cantidad: 0, total: 0 };
+      r.cantidad += it.cantidad;
+      r.total += (it.precio || 0) * it.cantidad;
+      prods.set(it.nombre, r);
+    }));
+    const top = [...prods.values()].sort((a, b) => b.cantidad - a.cantidad);
+
+    const filas = peds.map(p => {
+      const est = ESTADOS[p.estado] || ESTADOS.nuevo;
+      const destino = p.tipo === "local" ? `Mesa ${esc(p.mesa)}` : `Domicilio · ${esc(p.nombre)}`;
+      const items = p.items.map(it => `${it.cantidad}x ${esc(it.nombre)}`).join(", ");
+      return `<tr class="${p.estado === "cancelado" ? "cancelado" : ""}">
+        <td><b>#${esc(p.numero)}</b><br><small>${hora(p.creado)}</small></td>
+        <td>${destino}<br><small>${items}</small></td>
+        <td><span class="mini-estado" data-estado="${esc(p.estado)}">${est.txt}</span></td>
+        <td class="num">${p.total ? pesos(p.total) : "—"}</td>
+      </tr>`;
+    }).join("");
+
+    return `
+      ${top.length ? `<div class="dia-productos"><h3>Productos vendidos</h3><ul>${top.map(t =>
+        `<li><span>${t.cantidad}x ${esc(t.nombre)}</span><b>${pesos(t.total)}</b></li>`).join("")}</ul></div>` : ""}
+      <div class="tabla-scroll"><table class="tabla-pedidos">
+        <thead><tr><th>Pedido</th><th>Detalle</th><th>Estado</th><th class="num">Total</th></tr></thead>
+        <tbody>${filas}</tbody>
+      </table></div>`;
+  }
+
+  async function abrirDia(fecha) {
+    const caja = $("hist-dias-lista").querySelector(`.dia[data-fecha="${fecha}"]`);
+    if (!caja) return;
+    const det = caja.querySelector(".dia-detalle");
+    caja.querySelector(".dia-cabecera").setAttribute("aria-expanded", "true");
+    det.classList.remove("oculto");
+    det.innerHTML = `<p class="vacio">Cargando pedidos…</p>`;
+    try {
+      det.innerHTML = detalleDia(await api(`/api/admin/dia/${encodeURIComponent(fecha)}`));
+    } catch (e) {
+      if (e.message !== "Sesión expirada") det.innerHTML = `<p class="vacio">Error: ${esc(e.message)}</p>`;
+    }
+  }
+
+  $("hist-dias-lista").addEventListener("click", e => {
+    const cab = e.target.closest(".dia-cabecera");
+    if (!cab) return;
+    const fecha = cab.closest(".dia").dataset.fecha;
+    if (cab.getAttribute("aria-expanded") === "true") {
+      cab.setAttribute("aria-expanded", "false");
+      cab.nextElementSibling.classList.add("oculto");
+      diaAbierto = null;
+    } else {
+      diaAbierto = fecha;
+      abrirDia(fecha);
+    }
+  });
+  $("hist-dias").addEventListener("change", cargarHistorial);
+  $("btn-hist-recargar").addEventListener("click", cargarHistorial);
+
   // ---------- Inicio ----------
   api("/api/auth/me").then(mostrarPanel).catch(mostrarLogin);
 })();

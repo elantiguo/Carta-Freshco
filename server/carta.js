@@ -9,12 +9,13 @@ const RUTA = path.join(__dirname, "..", "js", "data.js");
 function cargarCarta() {
   const codigo = fs.readFileSync(RUTA, "utf8");
   const carta = vm.runInNewContext(
-    `${codigo}\n;({ CARTA, buscarProducto, precioDe, esDiaPromo })`,
+    `${codigo}\n;({ CARTA, CARTA_CONFIG, buscarProducto, precioDe, esDiaPromo })`,
     {},
     { filename: RUTA }
   );
 
   return {
+    zonaHoraria: carta.CARTA_CONFIG.zonaHoraria || "America/Bogota",
     // Devuelve los datos del producto o null si no existe
     producto(id) {
       const p = carta.buscarProducto(String(id));

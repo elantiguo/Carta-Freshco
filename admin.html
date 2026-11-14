@@ -40,6 +40,29 @@
       </div>
     </header>
 
+    <div class="vistas" role="tablist" aria-label="Secciones del panel">
+      <button type="button" role="tab" data-vista="pedidos" aria-selected="true" class="activo">Pedidos en curso</button>
+      <button type="button" role="tab" data-vista="historial" aria-selected="false">Historial y ventas</button>
+    </div>
+
+    <section id="vista-historial" class="historial oculto" aria-label="Historial de ventas">
+      <div class="hist-controles">
+        <label>Mostrar
+          <select id="hist-dias">
+            <option value="7">últimos 7 días</option>
+            <option value="30" selected>últimos 30 días</option>
+            <option value="90">últimos 90 días</option>
+            <option value="366">último año</option>
+          </select>
+        </label>
+        <button type="button" id="btn-hist-recargar" class="btn-icono">Actualizar</button>
+      </div>
+      <div class="hist-kpis" id="hist-kpis"></div>
+      <p class="hist-nota">Ventas = suma de los pedidos no cancelados, según el precio de cada pedido. Toca un día para ver sus pedidos.</p>
+      <div id="hist-dias-lista" class="hist-dias"></div>
+    </section>
+
+    <div id="vista-pedidos">
     <nav class="filtros" id="filtros" aria-label="Filtrar pedidos">
       <button type="button" data-filtro="activos" class="activo">Activos <b id="cnt-activos">0</b></button>
       <button type="button" data-filtro="nuevo">Nuevos <b id="cnt-nuevo">0</b></button>
@@ -51,9 +74,11 @@
     </nav>
 
     <main id="lista-pedidos" class="lista-pedidos" aria-live="polite"></main>
+    </div>
   </section>
 
   <script src="js/draw.js"></script>
+  <script src="js/data.js"></script>
   <script src="js/admin.js"></script>
 </body>
 </html>

@@ -1,15 +1,15 @@
 const path = require("path");
 const crypto = require("crypto");
 const express = require("express");
-const { crearStore, ESTADOS } = require("./store");
+const { crearStore, ESTADOS, FECHA_RE } = require("./store");
 const { cargarCarta } = require("./carta");
 const auth = require("./auth");
 
 const RAIZ = path.join(__dirname, "..");
 const PUERTO = process.env.PORT || 3000;
 
-const store = crearStore();
 const carta = cargarCarta();
+const store = crearStore({ zona: carta.zonaHoraria });
 const app = express();
 
 app.set("trust proxy", 1); // Render está detrás de un proxy (IP real y HTTPS)
@@ -124,6 +124,18 @@ app.get("/api/admin/pedidos", auth.requiereAdmin, asyncRuta(async (req, res) => 
     ? req.query.estados.split(",").filter(e => ESTADOS.includes(e))
     : null;
   res.json(await store.listar({ estados }));
+}));
+
+// Historial: ventas por día (hora de Colombia)
+app.get("/api/admin/resumen", auth.requiereAdmin, asyncRuta(async (req, res) => {
+  const dias = Math.min(Math.max(parseInt(req.query.dias, 10) || 60, 1), 366);
+  res.json(await store.resumenDiario({ dias }));
+}));
+
+// Historial: todos los pedidos de un día (AAAA-MM-DD)
+app.get("/api/admin/dia/:fecha", auth.requiereAdmin, asyncRuta(async (req, res) => {
+  if (!FECHA_RE.test(req.params.fecha)) return res.status(400).json({ error: "Fecha inválida" });
+  res.json(await store.listarPorDia(req.params.fecha));
 }));
 
 app.patch("/api/admin/pedidos/:id", auth.requiereAdmin, asyncRuta(async (req, res) => {

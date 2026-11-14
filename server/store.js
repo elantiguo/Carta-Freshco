@@ -6,8 +6,14 @@ const fs = require("fs");
 const path = require("path");
 
 const ESTADOS = ["nuevo", "preparando", "listo", "entregado", "cancelado"];
+const FECHA_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-function crearStoreArchivo() {
+function crearStoreArchivo(zona) {
+  // Día (AAAA-MM-DD) en la zona horaria del negocio
+  const diaDe = fecha => new Intl.DateTimeFormat("en-CA", {
+    timeZone: zona, year: "numeric", month: "2-digit", day: "2-digit"
+  }).format(new Date(fecha));
+
   const dir = path.join(__dirname, "..", "data");
   const archivo = path.join(dir, "pedidos.json");
   let pedidos = [];
@@ -51,11 +57,28 @@ function crearStoreArchivo() {
       p.actualizado = new Date().toISOString();
       await persistir();
       return p;
+    },
+    // Ventas por día de los últimos `dias` días (los cancelados no suman)
+    async resumenDiario({ dias = 60 } = {}) {
+      const desde = diaDe(Date.now() - (dias - 1) * 864e5);
+      const mapa = new Map();
+      for (const p of pedidos) {
+        const fecha = diaDe(p.creado);
+        if (fecha < desde) continue;
+        const r = mapa.get(fecha) || { fecha, pedidos: 0, cancelados: 0, unidades: 0, total: 0 };
+        if (p.estado === "cancelado") r.cancelados += 1;
+        else { r.pedidos += 1; r.unidades += p.unidades || 0; r.total += p.total || 0; }
+        mapa.set(fecha, r);
+      }
+      return [...mapa.values()].sort((a, b) => b.fecha.localeCompare(a.fecha));
+    },
+    async listarPorDia(fecha) {
+      return pedidos.filter(p => diaDe(p.creado) === fecha).sort((a, b) => a.numero - b.numero);
     }
   };
 }
 
-function crearStorePostgres(url) {
+function crearStorePostgres(url, zona) {
   const { Pool } = require("pg");
   // pg 8 ya trata require/prefer/verify-ca como verify-full; se explicita para evitar el aviso.
   url = url.replace(/([?&]sslmode=)(require|prefer|verify-ca)\b/, "$1verify-full");
@@ -113,17 +136,38 @@ function crearStorePostgres(url) {
         [id, estado]
       );
       return rows[0] ? aPedido(rows[0]) : null;
+    },
+    // Ventas por día de los últimos `dias` días (los cancelados no suman)
+    async resumenDiario({ dias = 60 } = {}) {
+      const { rows } = await pool.query(`
+        SELECT to_char(creado AT TIME ZONE $1, 'YYYY-MM-DD') AS fecha,
+               count(*) FILTER (WHERE estado <> 'cancelado')::int AS pedidos,
+               count(*) FILTER (WHERE estado = 'cancelado')::int AS cancelados,
+               COALESCE(sum((datos->>'unidades')::int) FILTER (WHERE estado <> 'cancelado'), 0)::int AS unidades,
+               COALESCE(sum((datos->>'total')::numeric) FILTER (WHERE estado <> 'cancelado'), 0)::float8 AS total
+        FROM pedidos
+        WHERE (creado AT TIME ZONE $1)::date >= (now() AT TIME ZONE $1)::date - ($2::int - 1)
+        GROUP BY 1
+        ORDER BY 1 DESC`, [zona, dias]);
+      return rows;
+    },
+    async listarPorDia(fecha) {
+      const { rows } = await pool.query(
+        "SELECT * FROM pedidos WHERE (creado AT TIME ZONE $1)::date = $2::date ORDER BY numero",
+        [zona, fecha]
+      );
+      return rows.map(aPedido);
     }
   };
 }
 
-function crearStore() {
+function crearStore({ zona = "America/Bogota" } = {}) {
   const url = process.env.DATABASE_URL;
-  if (url) return crearStorePostgres(url);
+  if (url) return crearStorePostgres(url, zona);
   if (process.env.NODE_ENV === "production") {
     console.warn("[store] ADVERTENCIA: DATABASE_URL no está definida. Los pedidos se guardan en un archivo y se PERDERÁN al reiniciar el servidor.");
   }
-  return crearStoreArchivo();
+  return crearStoreArchivo(zona);
 }
 
-module.exports = { crearStore, ESTADOS };
+module.exports = { crearStore, ESTADOS, FECHA_RE };
