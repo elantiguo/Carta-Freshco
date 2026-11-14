@@ -11,13 +11,15 @@ main.innerHTML = CARTA.map(s => `
     ${GOTAS}
     ${s.items.length ? `<ul class="lista">${s.items.map(i => `
       <li>
-        <span class="dibujo" style="--c2:${i.color[1]}">${dibujar(i)}</span>
+        <span class="dibujo" style="--c2:${i.color ? i.color[1] : '#ff2338'}">
+          ${i.imagen ? `<img src="${encodeURI(i.imagen)}" alt="${esc(i.nombre)}" loading="lazy">` : dibujar(i)}
+        </span>
         <div><h3>${esc(i.nombre)}</h3><p>${esc(i.ingredientes)}</p></div>
         ${i.precio != null ? `<span class="precio">${pesos(i.precio)}</span>` : "<span></span>"}
       </li>`).join("")}</ul>` : ""}
     ${s.nota ? `<p class="nota">${esc(s.nota)}</p>` : ""}
     ${s.fotos ? `<div class="fotos">${s.fotos.map(f =>
-      `<img src="${f.src}" alt="${esc(f.alt)}" loading="lazy" width="800" height="1000">`).join("")}</div>` : ""}
+      `<img src="${encodeURI(f.src)}" alt="${esc(f.alt)}" loading="lazy" width="800" height="1000">`).join("")}</div>` : ""}
   </section>`).join("");
 
 nav.innerHTML = CARTA.map(s => `<a href="#${s.id}" data-id="${s.id}">${esc(s.atajo)}</a>`).join("");
@@ -43,4 +45,3 @@ if ("IntersectionObserver" in window) {
   document.querySelectorAll("main section").forEach(s => obs.observe(s));
 }
 marcar(CARTA[0].id);
-
