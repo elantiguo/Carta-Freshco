@@ -32,7 +32,7 @@ main.innerHTML = CARTA.map(s => `
     ${s.simple ? renderSimple(s) : (s.items.length ? renderLista(s) : "")}
     ${s.nota ? `<p class="nota">${esc(s.nota)}</p>` : ""}
     ${s.fotos ? `<div class="fotos">${s.fotos.map(f =>
-      `<img src="${encodeURI(f.src)}" alt="${esc(f.alt)}" loading="lazy" width="800" height="1000">`).join("")}</div>` : ""}
+  `<img src="${encodeURI(f.src)}" alt="${esc(f.alt)}" loading="lazy" width="800" height="1000">`).join("")}</div>` : ""}
   </section>`).join("");
 
 nav.innerHTML = CARTA.map(s => `<a href="#${s.id}" data-id="${s.id}">${esc(s.atajo)}</a>`).join("");
