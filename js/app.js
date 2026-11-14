@@ -14,7 +14,7 @@ main.innerHTML = CARTA.map(s => `
         <span class="dibujo" style="--c2:${i.color ? i.color[1] : '#ff2338'}">
           ${i.imagen ? `<img src="${encodeURI(i.imagen)}" alt="${esc(i.nombre)}" loading="lazy">` : dibujar(i)}
         </span>
-        <div><h3>${esc(i.nombre)}</h3><p>${esc(i.ingredientes)}</p></div>
+        <div><h3>${esc(i.nombre)}</h3>${i.sabor ? `<p>${esc(i.sabor)}</p>` : ""}</div>
         ${i.precio != null ? `<span class="precio">${pesos(i.precio)}</span>` : "<span></span>"}
       </li>`).join("")}</ul>` : ""}
     ${s.nota ? `<p class="nota">${esc(s.nota)}</p>` : ""}
