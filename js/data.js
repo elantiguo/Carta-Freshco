@@ -63,7 +63,7 @@ const CARTA = [
   },
   {
     id: "cervezas", atajo: "Cervezas", tono: "ambar",
-    titulo: "Las <em>cervezas</em>",
+    titulo: "<em>cervezas</em>",
     items: [
       { nombre: "Coronita", imagen: "img/coronita.webp", sabor: "Cerveza mexicana", vaso: "botella", etiqueta: "#ffffff", tapa: "#f5c542", color: ["#fff3b0", "#f0bd2a"], precio: null },
       { nombre: "Poker", imagen: "img/poker.webp", sabor: "Cerveza colombiana", vaso: "botella", etiqueta: "#d81e2c", tapa: "#e8e8e8", color: ["#9a5a1a", "#4a2508"], precio: null },
