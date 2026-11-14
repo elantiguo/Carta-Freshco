@@ -28,33 +28,37 @@ const CARTA = [
     ]
   },
   {
-    id: "con-licor", atajo: "Con licor", tono: "violeta",
+    id: "con-licor", atajo: "Granizados con licor", tono: "violeta",
     titulo: "Granizados <em>con licor</em>",
+    simple: true,
+    foto: { src: "img/vaso-morado.jpg", alt: "Granizado Freshco con licor" },
     items: [
-      { nombre: "Ardiente", sabor: "Aguardiente con chile", vaso: "alto", hielo: true, color: ["#ff4a3d", "#8b0000"], precio: null },
-      { nombre: "Mora Blue", sabor: "Mora con curazao azul", vaso: "alto", hielo: true, color: ["#7b2fff", "#1a0066"], precio: null },
-      { nombre: "Fresa Intensa", sabor: "Fresa concentrada con vodka", vaso: "alto", hielo: true, color: ["#ff4466", "#990022"], precio: null },
-      { nombre: "Mar Azul", sabor: "Curazao azul con cítricos", vaso: "alto", hielo: true, color: ["#00bfff", "#003366"], precio: null },
-      { nombre: "Caipirinha", sabor: "Lima y cachaza brasileña", vaso: "alto", hielo: true, color: ["#c8ff66", "#2e7a00"], precio: null },
-      { nombre: "Rosé Summer", sabor: "Vino rosado con frutas", vaso: "alto", hielo: true, color: ["#ffb3c6", "#cc3366"], precio: null },
-      { nombre: "Smirnoff", sabor: "Vodka con frutas cítricas", vaso: "alto", hielo: true, color: ["#e0f0ff", "#4dabff"], precio: null },
-      { nombre: "Sex On The Beach", sabor: "Durazno, naranja y vodka", vaso: "alto", hielo: true, color: ["#ffaa33", "#ff4444"], precio: null },
-      { nombre: "Mulberry", sabor: "Mora silvestre con ron", vaso: "alto", hielo: true, color: ["#c44dbb", "#3d003d"], precio: null },
-      { nombre: "Margarita", sabor: "Lima con tequila y sal", vaso: "alto", hielo: true, color: ["#e6ff80", "#669900"], precio: null },
-      { nombre: "Jumanji", sabor: "Mix de frutas tropicales con ron", vaso: "alto", hielo: true, color: ["#33cc66", "#004d1a"], precio: null }
+      { nombre: "Ardiente", sabor: "Aguardiente con chile" },
+      { nombre: "Mora Blue", sabor: "Mora con curazao azul" },
+      { nombre: "Fresa Intensa", sabor: "Fresa concentrada con vodka" },
+      { nombre: "Mar Azul", sabor: "Curazao azul con cítricos" },
+      { nombre: "Caipirinha", sabor: "Lima y cachaza brasileña" },
+      { nombre: "Rosé Summer", sabor: "Vino rosado con frutas" },
+      { nombre: "Smirnoff", sabor: "Vodka con frutas cítricas" },
+      { nombre: "Sex On The Beach", sabor: "Durazno, naranja y vodka" },
+      { nombre: "Mulberry", sabor: "Mora silvestre con ron" },
+      { nombre: "Margarita", sabor: "Lima con tequila y sal" },
+      { nombre: "Jumanji", sabor: "Mix de frutas tropicales con ron" }
     ]
   },
   {
-    id: "sin-licor", atajo: "Sin licor", tono: "hielo",
+    id: "sin-licor", atajo: "Granizados sin licor", tono: "hielo",
     titulo: "Granizados <em>sin licor</em>",
+    simple: true,
+    foto: { src: "img/vaso-naranja.jpg", alt: "Granizado Freshco sin licor" },
     items: [
-      { nombre: "Mora Azul", sabor: "Mora azul natural", vaso: "alto", hielo: true, color: ["#6644cc", "#220066"], precio: null },
-      { nombre: "Maracuyá", sabor: "Fruta de la pasión", vaso: "alto", hielo: true, color: ["#ffcc00", "#cc8800"], precio: null },
-      { nombre: "Mango Biche", sabor: "Mango verde", vaso: "alto", hielo: true, color: ["#99cc33", "#336600"], precio: null },
-      { nombre: "Bubbachella", sabor: "Tutti frutti", vaso: "alto", hielo: true, color: ["#ff66cc", "#cc0088"], precio: null },
-      { nombre: "Sandía", sabor: "Sandía natural", vaso: "alto", hielo: true, color: ["#ff3355", "#880022"], precio: null },
-      { nombre: "Frambuesa", sabor: "Frambuesa natural", vaso: "alto", hielo: true, color: ["#ff3377", "#990033"], precio: null },
-      { nombre: "Fresa", sabor: "Fresa natural", vaso: "alto", hielo: true, color: ["#ff4455", "#aa0011"], precio: null }
+      { nombre: "Mora Azul", sabor: "Mora azul natural" },
+      { nombre: "Maracuyá", sabor: "Fruta de la pasión" },
+      { nombre: "Mango Biche", sabor: "Mango verde" },
+      { nombre: "Bubbachella", sabor: "Tutti frutti" },
+      { nombre: "Sandía", sabor: "Sandía natural" },
+      { nombre: "Frambuesa", sabor: "Frambuesa natural" },
+      { nombre: "Fresa", sabor: "Fresa natural" }
     ]
   },
   {

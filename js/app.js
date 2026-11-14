@@ -5,18 +5,31 @@ const pesos = n => "$" + Number(n).toLocaleString("es-CO");
 const main = document.getElementById("carta");
 const nav = document.getElementById("atajos");
 
+function renderLista(s) {
+  return `<ul class="lista">${s.items.map(i => `
+    <li>
+      <span class="dibujo" style="--c2:${i.color ? i.color[1] : '#ff2338'}">
+        ${i.imagen ? `<img src="${encodeURI(i.imagen)}" alt="${esc(i.nombre)}" loading="lazy">` : dibujar(i)}
+      </span>
+      <div><h3>${esc(i.nombre)}</h3>${i.sabor ? `<p>${esc(i.sabor)}</p>` : ""}</div>
+      ${i.precio != null ? `<span class="precio">${pesos(i.precio)}</span>` : "<span></span>"}
+    </li>`).join("")}</ul>`;
+}
+
+function renderSimple(s) {
+  return `<div class="granizado-wrap">
+    ${s.foto ? `<img class="granizado-foto" src="${encodeURI(s.foto.src)}" alt="${esc(s.foto.alt)}" loading="lazy">` : ""}
+    <ul class="nombres">${s.items.map(i => `
+      <li><strong>${esc(i.nombre)}</strong><span>${esc(i.sabor)}</span></li>`).join("")}
+    </ul>
+  </div>`;
+}
+
 main.innerHTML = CARTA.map(s => `
   <section id="${s.id}" class="${s.tono}">
     <h2>${s.titulo}</h2>
     ${GOTAS}
-    ${s.items.length ? `<ul class="lista">${s.items.map(i => `
-      <li>
-        <span class="dibujo" style="--c2:${i.color ? i.color[1] : '#ff2338'}">
-          ${i.imagen ? `<img src="${encodeURI(i.imagen)}" alt="${esc(i.nombre)}" loading="lazy">` : dibujar(i)}
-        </span>
-        <div><h3>${esc(i.nombre)}</h3>${i.sabor ? `<p>${esc(i.sabor)}</p>` : ""}</div>
-        ${i.precio != null ? `<span class="precio">${pesos(i.precio)}</span>` : "<span></span>"}
-      </li>`).join("")}</ul>` : ""}
+    ${s.simple ? renderSimple(s) : (s.items.length ? renderLista(s) : "")}
     ${s.nota ? `<p class="nota">${esc(s.nota)}</p>` : ""}
     ${s.fotos ? `<div class="fotos">${s.fotos.map(f =>
       `<img src="${encodeURI(f.src)}" alt="${esc(f.alt)}" loading="lazy" width="800" height="1000">`).join("")}</div>` : ""}
