@@ -39,8 +39,16 @@ const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':
 
 try {
   const p = new URLSearchParams(location.search).get("p");
-  if (!p) throw 0;
-  const { t, m, nm, d, its = [], notas } = JSON.parse(decodeURIComponent(atob(p)));
+  if (!p) throw new Error("Sin parámetro");
+  let jsonStr = "";
+  try {
+    let s = p.replace(/-/g, "+").replace(/_/g, "/").replace(/ /g, "+");
+    while (s.length % 4) s += "=";
+    jsonStr = decodeURIComponent(escape(atob(s)));
+  } catch (err) {
+    jsonStr = decodeURIComponent(p);
+  }
+  const { t, m, nm, d, its = [], notas } = JSON.parse(jsonStr);
 
   const modo = t === "local"
     ? `<span class="badge badge-local">En el local – Mesa ${esc(m)}</span>`
@@ -72,3 +80,4 @@ try {
 </script>
 </body>
 </html>
+

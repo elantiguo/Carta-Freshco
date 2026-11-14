@@ -1,6 +1,7 @@
 const CARTA_CONFIG = {
   telefonoWhatsapp: "573123740187",
   nombreNegocio: "Freshco",
+  urlWeb: "https://carta-freshco.onrender.com",
   baseUrlImagenes: "https://raw.githubusercontent.com/elantiguo/Carta-Freshco/main/"
 };
 

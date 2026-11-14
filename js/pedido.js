@@ -1,6 +1,7 @@
 const CONFIG_PEDIDO = {
   telefono: (typeof CARTA_CONFIG !== "undefined" && CARTA_CONFIG.telefonoWhatsapp) ? CARTA_CONFIG.telefonoWhatsapp : "573123740187",
   nombreLocal: (typeof CARTA_CONFIG !== "undefined" && CARTA_CONFIG.nombreNegocio) ? CARTA_CONFIG.nombreNegocio : "Freshco",
+  urlWeb: (typeof CARTA_CONFIG !== "undefined" && CARTA_CONFIG.urlWeb) ? CARTA_CONFIG.urlWeb : "https://carta-freshco.onrender.com",
   baseUrlImagenes: (typeof CARTA_CONFIG !== "undefined" && CARTA_CONFIG.baseUrlImagenes) ? CARTA_CONFIG.baseUrlImagenes : "https://raw.githubusercontent.com/elantiguo/Carta-Freshco/main/"
 };
 
@@ -84,9 +85,12 @@ const Pedido = {
       i: it.imagen || this.resolverImagen(it.id, it.nombre, it.seccion)
     }));
     const json = JSON.stringify({ t, m, nm, d, notas, its });
-    const base64 = btoa(encodeURIComponent(json));
-    const origen = typeof window !== "undefined" ? window.location.origin : "";
-    return `${origen}/pedido.html?p=${base64}`;
+    const b64 = btoa(unescape(encodeURIComponent(json))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    let origen = typeof window !== "undefined" ? window.location.origin : "";
+    if (!origen || origen === "null" || origen.includes("127.0.0.1") || origen.includes("localhost") || origen.startsWith("file:")) {
+      origen = (CONFIG_PEDIDO.urlWeb || "https://carta-freshco.onrender.com").replace(/\/$/, "");
+    }
+    return `${origen}/pedido.html?p=${encodeURIComponent(b64)}`;
   },
 
   _construirLineas({ tipo = "local", mesa = "1", nombre = "", direccion = "", notas = "" } = {}) {
@@ -112,9 +116,7 @@ const Pedido = {
     });
     lineas.push("----------------------------");
     lineas.push(`*Total unidades:* ${this.totalItems()}`);
-    if (this.tienePrecios()) {
-      lineas.push(`*Total estimado:* $${this.totalPrecio().toLocaleString("es-CO")}`);
-    }
+    if (this.tienePrecios()) lineas.push(`*Total estimado:* $${this.totalPrecio().toLocaleString("es-CO")}`);
     if (notas.trim()) {
       lineas.push("----------------------------");
       lineas.push(`*Notas:* ${notas.trim()}`);
@@ -133,9 +135,8 @@ const Pedido = {
     const lineas = this._construirLineas(opts);
     lineas.push("----------------------------");
     lineas.push(`Ver pedido con fotos: ${this._codificarUrl(opts)}`);
-    const texto = lineas.join("\n");
     const num = CONFIG_PEDIDO.telefono.replace(/\D/g, "");
-    return `https://wa.me/${num}?text=${encodeURIComponent(texto)}`;
+    return `https://wa.me/${num}?text=${encodeURIComponent(lineas.join("\n"))}`;
   }
 };
 
