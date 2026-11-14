@@ -1,0 +1,27 @@
+/* Fotos como calcomanías */
+.fotos {
+  display: grid; grid-template-columns: 1fr 1fr;
+  gap: 14px; margin-top: 22px; padding: 0 4px;
+}
+.fotos img {
+  width: 100%; aspect-ratio: 4/5; object-fit: cover;
+  border: 5px solid #fff; border-radius: 18px; background: #111;
+  box-shadow: 0 18px 36px -14px #000, 0 0 32px -6px color-mix(in srgb, var(--acento) 70%, transparent);
+}
+.fotos img:first-child { transform: rotate(-2.5deg); }
+.fotos img:last-child { transform: rotate(2deg) translateY(14px); }
+
+/* Pie */
+footer {
+  margin-top: 70px; padding-top: 26px; border-top: 1px solid var(--linea);
+  color: var(--tenue); font-size: 13.5px; text-align: center;
+}
+footer img { width: 120px; margin: 0 auto 14px; opacity: .9; }
+footer p { margin: 0 0 6px; }
+footer strong { color: var(--texto); font-weight: 600; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  .luces i, .led, .cabecera img { animation: none; }
+}
+

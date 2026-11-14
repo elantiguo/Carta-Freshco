@@ -1,0 +1,57 @@
+:root {
+  color-scheme: dark;
+  --noche: #05060c;
+  --panel: rgba(255, 255, 255, .045);
+  --hielo: #7fd4ff;
+  --labial: #ff2338;
+  --violeta: #a45bff;
+  --ambar: #ffb92e;
+  --texto: #f2f6fc;
+  --tenue: #9aa6bb;
+  --linea: rgba(255, 255, 255, .10);
+  --f-titulo: "Rubik Wet Paint", "Impact", "Arial Black", sans-serif;
+  --f-nombre: "Barlow Condensed", "Arial Narrow", Arial, sans-serif;
+  --f-cuerpo: "Barlow", system-ui, -apple-system, "Segoe UI", Arial, sans-serif;
+}
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--noche);
+  color: var(--texto);
+  font-family: var(--f-cuerpo);
+  font-size: 17px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+img { max-width: 100%; height: auto; display: block; }
+
+/* Luces de ambiente */
+.luces { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+.luces i { position: absolute; border-radius: 50%; filter: blur(70px); opacity: .55; }
+.luces i:nth-child(1) {
+  width: 70vmax; height: 70vmax; left: -30vmax; top: -25vmax;
+  background: radial-gradient(circle, #2f6bff 0%, transparent 65%);
+  animation: vaiven 16s ease-in-out infinite alternate;
+}
+.luces i:nth-child(2) {
+  width: 65vmax; height: 65vmax; right: -30vmax; top: -10vmax;
+  background: radial-gradient(circle, var(--labial) 0%, transparent 65%);
+  animation: vaiven 19s ease-in-out infinite alternate-reverse;
+}
+.luces i:nth-child(3) {
+  width: 70vmax; height: 70vmax; left: -10vmax; bottom: -40vmax;
+  background: radial-gradient(circle, var(--violeta) 0%, transparent 65%);
+  opacity: .4; animation: vaiven 23s ease-in-out infinite alternate;
+}
+@keyframes vaiven { to { transform: translate(8vmax, 6vmax) scale(1.15); } }
+
+/* Tira LED */
+.led {
+  position: relative; z-index: 2; height: 4px;
+  background: linear-gradient(90deg, #2f9bff, var(--violeta), var(--labial), var(--violeta), #2f9bff);
+  background-size: 200% 100%; animation: correr 8s linear infinite;
+  box-shadow: 0 0 18px 2px rgba(164, 91, 255, .7), 0 0 46px 6px rgba(255, 35, 56, .35);
+}
+@keyframes correr { to { background-position: 200% 0; } }

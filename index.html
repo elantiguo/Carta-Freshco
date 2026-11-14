@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Carta Freshco</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik+Wet+Paint&family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/header.css">
+  <link rel="stylesheet" href="css/menu.css">
+  <link rel="stylesheet" href="css/footer.css">
+</head>
+<body>
+  <div class="luces" aria-hidden="true"><i></i><i></i><i></i></div>
+  <div class="led" aria-hidden="true"></div>
+
+  <div class="hoja">
+    <header class="cabecera">
+      <img src="img/logo.webp" alt="Freshco" width="1000" height="641">
+      <div><span class="neon">La carta</span></div>
+      <p class="lema">Cócteles<b>✦</b>Cervezas<b>✦</b>De la casa</p>
+    </header>
+
+    <nav class="atajos" id="atajos" aria-label="Secciones de la carta"></nav>
+
+    <main id="carta"></main>
+
+    <footer>
+      <img src="img/logo.webp" alt="" width="1000" height="641" loading="lazy">
+      <p><strong>Prohíbese el expendio de bebidas embriagantes a menores de edad.</strong></p>
+      <p>El exceso de alcohol es perjudicial para la salud.</p>
+    </footer>
+  </div>
+
+  <script src="js/data.js"></script>
+  <script src="js/draw.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

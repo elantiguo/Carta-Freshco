@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>404 - Carta Freshco</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik+Wet+Paint&family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/header.css">
+  <style>
+    .alerta {
+      text-align: center;
+      padding: 60px 10px;
+    }
+    .alerta h1 {
+      font-family: var(--f-titulo);
+      font-size: clamp(48px, 15vw, 84px);
+      margin: 0;
+      color: var(--labial);
+      text-shadow: 0 0 20px var(--labial);
+    }
+    .alerta p {
+      color: var(--tenue);
+      font-size: 18px;
+      margin: 16px 0 28px;
+    }
+    .boton {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: 999px;
+      background: linear-gradient(100deg, var(--labial), var(--violeta));
+      color: #fff;
+      text-decoration: none;
+      font-family: var(--f-nombre);
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      box-shadow: 0 0 18px rgba(255, 35, 56, .45);
+    }
+    .boton svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+    }
+  </style>
+</head>
+<body>
+  <div class="luces" aria-hidden="true"><i></i><i></i><i></i></div>
+  <div class="led" aria-hidden="true"></div>
+
+  <div class="hoja">
+    <header class="cabecera">
+      <img src="img/logo.webp" alt="Freshco" width="1000" height="641">
+    </header>
+
+    <div class="alerta">
+      <h1>404</h1>
+      <p>La página que buscas no existe o fue movida.</p>
+      <a href="index.html" class="boton">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/>
+        </svg>
+        <span>Volver a la carta</span>
+      </a>
+    </div>
+  </div>
+</body>
+</html>
+
