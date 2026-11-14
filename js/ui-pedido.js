@@ -148,19 +148,27 @@
       return Promise.resolve(null);
     }
     estadoUbic("buscando", "Buscando tu ubicación…", null);
-    pidiendoUbic = new Promise(resolve => {
-      navigator.geolocation.getCurrentPosition(pos => {
+    // 1º ubicación rápida (wifi/red, 1-2 s); si falla, 2º intento con GPS que puede tardar más
+    // (en un celular real dentro de una casa el GPS solo puede tardar más de 15 s).
+    const intento = opciones => new Promise((ok, falla) => navigator.geolocation.getCurrentPosition(ok, falla, opciones));
+    pidiendoUbic = intento({ enableHighAccuracy: false, timeout: 10000, maximumAge: 120000 })
+      .catch(err => {
+        if (err.code === err.PERMISSION_DENIED) throw err;
+        estadoUbic("buscando", "Buscando señal de GPS…", null);
+        return intento({ enableHighAccuracy: true, timeout: 30000, maximumAge: 120000 });
+      })
+      .then(pos => {
         ubicacion = { lat: pos.coords.latitude, lng: pos.coords.longitude, precision: pos.coords.accuracy };
         estadoUbic("ok", `Ubicación activada (precisión ±${Math.round(pos.coords.accuracy)} m)`, null);
-        resolve(ubicacion);
+        return ubicacion;
       }, err => {
         const negado = err.code === err.PERMISSION_DENIED;
         estadoUbic("error", negado
           ? "Ubicación bloqueada. Actívala en los permisos del navegador para este sitio y vuelve a intentar."
-          : "No pudimos obtener tu ubicación. Revisa que el GPS esté encendido.", "Reintentar");
-        resolve(null);
-      }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 });
-    }).finally(() => { pidiendoUbic = null; });
+          : "No pudimos obtener tu ubicación. Revisa que la ubicación del celular esté encendida.", "Reintentar");
+        return null;
+      })
+      .finally(() => { pidiendoUbic = null; });
     return pidiendoUbic;
   }
   btnUbic.addEventListener("click", () => pedirUbicacion());

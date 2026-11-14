@@ -149,12 +149,27 @@ function iniciarUbicacion() {
   pintarUbic("buscando", "Activando tu ubicación…");
   // El GPS solo avisa cuando hay cambios: se reenvía la última posición cada 15 s
   // para no perder la más reciente y para que el panel la vea "en vivo".
-  latido = setInterval(() => { if (ultimaPos) enviarUbicacion(ultimaPos); }, ENVIO_CADA_MS);
+  // (se revisa cada 3 s; enviarUbicacion respeta el mínimo de 15 s entre envíos)
+  latido = setInterval(() => { if (ultimaPos) enviarUbicacion(ultimaPos); }, 3000);
+  setTimeout(() => {
+    if (ubicActiva && !ultimaPos) pintarUbic("buscando", "Aún buscando tu ubicación… Revisa que la ubicación (GPS) del celular esté encendida.");
+  }, 20000);
+  // Posición rápida (wifi/red) para empezar ya; el GPS la mejora después
+  navigator.geolocation.getCurrentPosition(
+    pos => { if (!ultimaPos) enviarUbicacion(pos, true); },
+    () => {},
+    { enableHighAccuracy: false, timeout: 10000, maximumAge: 120000 }
+  );
   vigilancia = navigator.geolocation.watchPosition(
-    pos => enviarUbicacion(pos),
+    pos => {
+      // No reemplazar una posición precisa por una mucho peor
+      if (ultimaPos && pos.coords.accuracy > ultimaPos.coords.accuracy * 3 && Date.now() - ultimaPos.timestamp < 60000) return;
+      enviarUbicacion(pos);
+    },
     err => {
-      // Fallos pasajeros del GPS con una posición ya conocida: se sigue intentando
-      if (err.code !== err.PERMISSION_DENIED && ultimaPos) return;
+      // Sin límite de tiempo el GPS no da TIMEOUT; otros fallos pasajeros se ignoran.
+      // Solo se detiene si el cliente bloquea el permiso.
+      if (err.code !== err.PERMISSION_DENIED) return;
       ubicActiva = false;
       if (vigilancia != null) navigator.geolocation.clearWatch(vigilancia);
       vigilancia = null;
@@ -163,7 +178,7 @@ function iniciarUbicacion() {
         ? "Ubicación bloqueada. Actívala en los permisos del navegador para este sitio."
         : "No pudimos obtener tu ubicación. Revisa que el GPS esté encendido.", "Activar ubicación");
     },
-    { enableHighAccuracy: true, maximumAge: 10000, timeout: 30000 }
+    { enableHighAccuracy: true, maximumAge: 10000 }
   );
 }
 
