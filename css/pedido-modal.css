@@ -120,3 +120,19 @@
 
 .modal-item-precio small { color: var(--tenue); font-weight: 500; font-size: 12.5px; }
 .aviso-domicilio { margin: 0; font-size: 13px; color: var(--ambar); }
+
+/* Ubicación del cliente para domicilios */
+.ubicacion-caja {
+  display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 12px;
+  background: rgba(255, 255, 255, .04); border: 1px solid var(--linea);
+}
+.campo-modal .ubicacion-icono { flex-shrink: 0; color: var(--hielo); display: flex; }
+.campo-modal .ubicacion-texto { flex: 1; font-size: 13.5px; color: var(--texto); line-height: 1.3; }
+.ubicacion-caja[data-estado="ok"] { border-color: rgba(61, 220, 132, .55); background: rgba(61, 220, 132, .08); }
+.ubicacion-caja[data-estado="ok"] .ubicacion-icono, .campo-modal .ubicacion-caja[data-estado="ok"] .ubicacion-texto { color: #3ddc84; }
+.ubicacion-caja[data-estado="error"] { border-color: rgba(255, 92, 109, .55); }
+.campo-modal .ubicacion-caja[data-estado="error"] .ubicacion-texto { color: #ff8a96; }
+.btn-ubicacion {
+  flex-shrink: 0; padding: 7px 14px; border-radius: 999px; border: none; cursor: pointer; background: #25d366; color: #05060c;
+  font-family: var(--f-nombre); font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: .04em;
+}

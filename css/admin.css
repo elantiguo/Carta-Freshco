@@ -185,3 +185,19 @@ button { font: inherit; }
 @media (max-width: 520px) {
   .tabla-pedidos th:nth-child(3), .tabla-pedidos td:nth-child(3) { display: none; }
 }
+
+/* Ubicación del cliente (domicilios) */
+.ubic-admin { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 8px; font-size: 13px; color: var(--tenue); }
+.ubic-admin.sin { font-style: italic; }
+.ubic-admin.vivo b { color: #3ddc84; }
+.ubic-admin.vivo b::before {
+  content: ""; display: inline-block; width: 8px; height: 8px; margin-right: 5px; border-radius: 50%;
+  background: #3ddc84; box-shadow: 0 0 8px #3ddc84; animation: latido 1.4s ease-in-out infinite;
+}
+@keyframes latido { 50% { opacity: .35; } }
+.btn-mapa {
+  display: inline-flex; align-items: center; padding: 6px 12px; border-radius: 999px; text-decoration: none;
+  background: rgba(61, 220, 132, .14); border: 1px solid rgba(61, 220, 132, .55); color: #3ddc84;
+  font-family: var(--f-nombre); font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: .04em;
+}
+.btn-mapa:hover { background: rgba(61, 220, 132, .25); }

@@ -32,6 +32,19 @@ app.use("/api", express.json({ limit: "20kb" }), (req, res, next) => {
 // ---------- Utilidades ----------
 const texto = (v, max) => (typeof v === "string" ? v.trim().slice(0, max) : "");
 
+// Ubicación GPS enviada por el navegador del cliente: { lat, lng, precision (metros) }
+function validarUbicacion(u) {
+  if (!u || typeof u !== "object") return null;
+  const lat = Number(u.lat), lng = Number(u.lng), precision = Number(u.precision);
+  if (!Number.isFinite(lat) || !Number.isFinite(lng) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return null;
+  return {
+    lat: Math.round(lat * 1e6) / 1e6,
+    lng: Math.round(lng * 1e6) / 1e6,
+    precision: Number.isFinite(precision) && precision >= 0 ? Math.min(Math.round(precision), 100000) : null,
+    actualizado: new Date().toISOString()
+  };
+}
+
 function validarPedido(body) {
   const tipo = body.tipo === "domicilio" ? "domicilio" : body.tipo === "local" ? "local" : null;
   if (!tipo) return { error: "Tipo de pedido inválido" };
@@ -70,6 +83,7 @@ function validarPedido(body) {
       nombre: tipo === "domicilio" ? nombre : "",
       direccion: tipo === "domicilio" ? direccion : "",
       notas: texto(body.notas, 120),
+      ubicacion: tipo === "domicilio" ? validarUbicacion(body.ubicacion) : null,
       items,
       unidades,
       total,
@@ -93,6 +107,24 @@ app.get("/api/pedidos/:id", asyncRuta(async (req, res) => {
   const p = await store.obtener(req.params.id);
   if (!p) return res.status(404).json({ error: "Pedido no encontrado" });
   res.json(p);
+}));
+
+// Ubicación en vivo del cliente (domicilios). El id del pedido funciona como llave.
+const ultimaUbicacion = new Map(); // id -> ms de la última actualización aceptada
+setInterval(() => {
+  const limite = Date.now() - 60 * 60 * 1000;
+  for (const [k, t] of ultimaUbicacion) if (t < limite) ultimaUbicacion.delete(k);
+}, 10 * 60 * 1000).unref();
+
+app.post("/api/pedidos/:id/ubicacion", asyncRuta(async (req, res) => {
+  const ubic = validarUbicacion(req.body);
+  if (!ubic) return res.status(400).json({ error: "Ubicación inválida" });
+  const ahora = Date.now();
+  if (ahora - (ultimaUbicacion.get(req.params.id) || 0) < 5000) return res.status(429).json({ error: "Demasiado seguido" });
+  const ok = await store.actualizarUbicacion(req.params.id, ubic);
+  if (!ok) return res.status(409).json({ error: "El pedido no existe, no es a domicilio o ya terminó" });
+  ultimaUbicacion.set(req.params.id, ahora);
+  res.status(204).end();
 }));
 
 // ---------- Autenticación ----------

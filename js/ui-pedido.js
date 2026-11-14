@@ -34,6 +34,11 @@
           <div id="campo-domicilio" class="campo-modal oculto">
             <label><span>Tu nombre: *</span><input type="text" id="pedido-nombre" placeholder="Nombre completo" maxlength="40"></label>
             <label><span>Dirección actual obligatoria: *</span><input type="text" id="pedido-dir" placeholder="Ej: Carrera 15 # 45-20" maxlength="80"></label>
+            <div class="ubicacion-caja" id="ubicacion-caja" data-estado="pendiente">
+              <span class="ubicacion-icono" aria-hidden="true"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.6"/></svg></span>
+              <span id="ubicacion-estado" class="ubicacion-texto">Activa tu ubicación para que el domiciliario te encuentre.</span>
+              <button type="button" id="btn-ubicacion" class="btn-ubicacion">Activar</button>
+            </div>
             <p class="aviso-domicilio">Los granizados a domicilio cuestan diferente; el total ya lo incluye.</p>
           </div>
           <label><span>Notas adicionales (opcional):</span><input type="text" id="pedido-notas" placeholder="Ej: Con bastante hielo" maxlength="120"></label>
@@ -113,7 +118,46 @@
     Pedido.cambiarTipo(tipoEntrega);
     campoLocal.classList.toggle("oculto", tipoEntrega !== "local");
     campoDomicilio.classList.toggle("oculto", tipoEntrega !== "domicilio");
+    if (tipoEntrega === "domicilio" && !ubicacion) pedirUbicacion();
   }));
+
+  // ---------- Ubicación del cliente (domicilios) ----------
+  const cajaUbic = document.getElementById("ubicacion-caja");
+  const textoUbic = document.getElementById("ubicacion-estado");
+  const btnUbic = document.getElementById("btn-ubicacion");
+  let ubicacion = null, pidiendoUbic = null;
+
+  function estadoUbic(estado, texto, boton) {
+    cajaUbic.dataset.estado = estado;
+    textoUbic.textContent = texto;
+    btnUbic.classList.toggle("oculto", !boton);
+    if (boton) btnUbic.textContent = boton;
+  }
+
+  // Pide la ubicación al navegador. Devuelve la ubicación o null.
+  function pedirUbicacion() {
+    if (pidiendoUbic) return pidiendoUbic;
+    if (!("geolocation" in navigator)) {
+      estadoUbic("error", "Tu navegador no permite compartir la ubicación. Escribe bien la dirección.", null);
+      return Promise.resolve(null);
+    }
+    estadoUbic("buscando", "Buscando tu ubicación…", null);
+    pidiendoUbic = new Promise(resolve => {
+      navigator.geolocation.getCurrentPosition(pos => {
+        ubicacion = { lat: pos.coords.latitude, lng: pos.coords.longitude, precision: pos.coords.accuracy };
+        estadoUbic("ok", `Ubicación activada (precisión ±${Math.round(pos.coords.accuracy)} m)`, null);
+        resolve(ubicacion);
+      }, err => {
+        const negado = err.code === err.PERMISSION_DENIED;
+        estadoUbic("error", negado
+          ? "Ubicación bloqueada. Actívala en los permisos del navegador para este sitio y vuelve a intentar."
+          : "No pudimos obtener tu ubicación. Revisa que el GPS esté encendido.", "Reintentar");
+        resolve(null);
+      }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 });
+    }).finally(() => { pidiendoUbic = null; });
+    return pidiendoUbic;
+  }
+  btnUbic.addEventListener("click", () => pedirUbicacion());
 
   dom.querySelectorAll(".btn-mesa").forEach(btn => btn.addEventListener("click", () => {
     dom.querySelectorAll(".btn-mesa").forEach(b => b.classList.remove("activo"));
@@ -162,15 +206,24 @@
     if (tipoEntrega === "domicilio") {
       if (!inputNombre.value.trim()) { inputNombre.focus(); return alert("Por favor ingresa tu nombre para el domicilio."); }
       if (!inputDir.value.trim()) { inputDir.focus(); return alert("Por favor ingresa la dirección actual para la entrega."); }
+      if (!ubicacion) {
+        btnEnviar.disabled = true;
+        await pedirUbicacion();
+        btnEnviar.disabled = false;
+        if (!ubicacion && !confirm("No pudimos obtener tu ubicación. El domiciliario usará solo la dirección escrita.\n\n¿Enviar el pedido de todos modos?")) return;
+      }
     }
-    const opts = { tipo: tipoEntrega, mesa: mesaSeleccionada, nombre: inputNombre.value, direccion: inputDir.value, notas: inputNotas.value };
+    const domicilio = tipoEntrega === "domicilio";
+    const opts = { tipo: tipoEntrega, mesa: mesaSeleccionada, nombre: inputNombre.value, direccion: inputDir.value, notas: inputNotas.value, ubicacion: domicilio ? ubicacion : null };
     btnEnviar.disabled = true;
     btnEnviar.querySelector("span").textContent = "Enviando...";
     try {
       const { id, numero } = await Pedido.enviar(opts);
       inputNotas.value = "";
-      mostrarConfirmacion(numero, id);
       Pedido.vaciar();
+      // Domicilio: ir a la página del pedido, que comparte la ubicación en vivo
+      if (domicilio) { location.href = `pedido.html?id=${encodeURIComponent(id)}`; return; }
+      mostrarConfirmacion(numero, id);
     } catch (err) {
       alert(err.message || "No se pudo enviar el pedido. Intenta de nuevo.");
     } finally {

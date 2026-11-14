@@ -152,11 +152,26 @@
     return h < 24 ? `hace ${h} h` : new Date(iso).toLocaleDateString("es-CO");
   }
 
+  // Ubicación GPS del cliente (domicilios). "En vivo" si se actualizó hace menos de 2 min.
+  function ubicacionHtml(p) {
+    const u = p.ubicacion;
+    if (!u) return `<span class="ubic-admin sin">Sin ubicación GPS: usar la dirección escrita</span>`;
+    const mapa = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${u.lat},${u.lng}`)}`;
+    const min = (Date.now() - new Date(u.actualizado)) / 60000;
+    const terminado = p.estado === "entregado" || p.estado === "cancelado";
+    const vivo = !terminado && min < 2;
+    const cuando = min < 1 ? "hace menos de 1 min" : min < 60 ? `hace ${Math.floor(min)} min` : `a las ${hora(u.actualizado)}`;
+    return `<span class="ubic-admin${vivo ? " vivo" : ""}">
+      <a class="btn-mapa" href="${esc(mapa)}" target="_blank" rel="noopener noreferrer">Ver en el mapa</a>
+      <span>${vivo ? "<b>En vivo</b> · " : ""}${cuando}${u.precision != null ? ` · ±${esc(u.precision)} m` : ""}</span>
+    </span>`;
+  }
+
   function tarjeta(p) {
     const est = ESTADOS[p.estado] || ESTADOS.nuevo;
     const destino = p.tipo === "local"
       ? `<strong class="mesa">Mesa ${esc(p.mesa)}</strong><small>En el local</small>`
-      : `<strong class="dom">Domicilio</strong><small>${esc(p.nombre)}</small><small>${esc(p.direccion)}</small>`;
+      : `<strong class="dom">Domicilio</strong><small>${esc(p.nombre)}</small><small>${esc(p.direccion)}</small>${ubicacionHtml(p)}`;
     const items = p.items.map(it => `
       <li>
         ${it.imagen ? `<img src="${esc(encodeURI(it.imagen))}" alt="" loading="lazy">` : ""}

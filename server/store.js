@@ -74,6 +74,14 @@ function crearStoreArchivo(zona) {
     },
     async listarPorDia(fecha) {
       return pedidos.filter(p => diaDe(p.creado) === fecha).sort((a, b) => a.numero - b.numero);
+    },
+    // Solo domicilios que no han terminado
+    async actualizarUbicacion(id, ubicacion) {
+      const p = pedidos.find(x => x.id === id);
+      if (!p || p.tipo !== "domicilio" || p.estado === "entregado" || p.estado === "cancelado") return false;
+      p.ubicacion = ubicacion;
+      await persistir();
+      return true;
     }
   };
 }
@@ -157,6 +165,15 @@ function crearStorePostgres(url, zona) {
         [zona, fecha]
       );
       return rows.map(aPedido);
+    },
+    // Solo domicilios que no han terminado
+    async actualizarUbicacion(id, ubicacion) {
+      const { rowCount } = await pool.query(
+        `UPDATE pedidos SET datos = jsonb_set(datos, '{ubicacion}', $2::jsonb)
+         WHERE id = $1 AND datos->>'tipo' = 'domicilio' AND estado NOT IN ('entregado', 'cancelado')`,
+        [id, JSON.stringify(ubicacion)]
+      );
+      return rowCount > 0;
     }
   };
 }

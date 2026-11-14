@@ -34,11 +34,21 @@
     .pasos li.hecho { border-color: #7fd4ff; color: #f2f6fc; }
     .pasos li.actual { font-weight: 600; }
     .cancelado { margin-top: 8px; color: #ff5c6d; }
+    .oculto { display: none !important; }
+    .ubic { border-color: rgba(37,211,102,.45); }
+    .ubic-buscando { border-color: rgba(127,212,255,.45); }
+    .ubic-error { border-color: rgba(255,92,109,.55); }
+    .ubic-texto { font-size: 15px; }
+    .ubic-ok .ubic-texto { color: #3ddc84; font-weight: 500; }
+    .ubic-error .ubic-texto { color: #ff8a96; }
+    .ubic-nota { margin-top: 6px; font-size: 13px; color: #9aa6bb; }
+    .btn-ubic { margin-top: 10px; width: 100%; padding: 11px; border-radius: 12px; border: none; cursor: pointer; background: #25d366; color: #05060c; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 17px; text-transform: uppercase; letter-spacing: .04em; }
     .btn-volver { display: inline-block; margin-top: 15px; padding: 8px 18px; border-radius: 999px; background: rgba(255,255,255,.08); color: #fff; text-decoration: none; font-family: 'Barlow Condensed', sans-serif; font-size: 15px; }
   </style>
 </head>
 <body>
 <img src="img/logo.webp" alt="Freshco" class="logo">
+<div id="ubic" class="oculto" aria-live="polite"></div>
 <div id="root"><div class="error">Cargando pedido...</div></div>
 <script>
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
@@ -67,7 +77,7 @@ function render(p) {
     : `<ol class="pasos">${PASOS.map((t, i) => `<li class="${i <= est.paso ? "hecho" : ""}${i === est.paso ? " actual" : ""}">${t}</li>`).join("")}</ol>`;
   const itemsHtml = p.items.map(it => {
     const img = it.imagen ? `<img src="${esc(encodeURI(it.imagen))}" alt="${esc(it.nombre)}" loading="lazy">` : "";
-    return `<div class="item">${img}<div><div class="item-nom">${esc(it.nombre)}</div><div class="item-sec">${esc(it.seccion)}${it.precio ? ` · ${Number(it.precio).toLocaleString("es-CO")} c/u` : ""}</div></div><span class="item-cant">${it.cantidad}x</span></div>`;
+    return `<div class="item">${img}<div><div class="item-nom">${esc(it.nombre)}</div><div class="item-sec">${esc(it.seccion)}${it.precio ? ` · $${Number(it.precio).toLocaleString("es-CO")} c/u` : ""}</div></div><span class="item-cant">${it.cantidad}x</span></div>`;
   }).join("");
   const total = p.total ? ` · $${Number(p.total).toLocaleString("es-CO")}` : "";
 
@@ -88,12 +98,90 @@ function error(msg) {
   root.innerHTML = `<div class="error"><p>${esc(msg)}</p><a href="index.html" class="btn-volver">Ir a la carta</a></div>`;
 }
 
+// ---------- Ubicación en vivo (solo domicilios en curso) ----------
+// El navegador solo puede enviarla mientras esta página esté abierta.
+const cajaUbic = document.getElementById("ubic");
+const ENVIO_CADA_MS = 15000;
+let vigilancia = null, latido = null, ultimoEnvio = 0, ultimaPos = null, ubicActiva = false;
+
+function pintarUbic(estado, texto, boton) {
+  cajaUbic.className = `tarjeta ubic ubic-${estado}`;
+  cajaUbic.innerHTML = `
+    <p class="sec-titulo">Ubicación para el domiciliario</p>
+    <p class="ubic-texto">${esc(texto)}</p>
+    ${estado === "ok" ? `<p class="ubic-nota">Mantén esta página abierta hasta recibir tu pedido para que el domiciliario vea dónde estás.</p>` : ""}
+    ${boton ? `<button type="button" class="btn-ubic" id="btn-ubic">${esc(boton)}</button>` : ""}`;
+  const b = document.getElementById("btn-ubic");
+  if (b) b.addEventListener("click", iniciarUbicacion);
+}
+
+async function enviarUbicacion(pos, forzar = false) {
+  ultimaPos = pos;
+  const ahora = Date.now();
+  if (!forzar && ahora - ultimoEnvio < ENVIO_CADA_MS) return;
+  ultimoEnvio = ahora;
+  try {
+    const res = await fetch(`/api/pedidos/${encodeURIComponent(id)}/ubicacion`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ lat: pos.coords.latitude, lng: pos.coords.longitude, precision: pos.coords.accuracy })
+    });
+    if (res.status === 409) return detenerUbicacion();
+    if (res.ok) {
+      const hora = new Date().toLocaleTimeString("es-CO", { hour: "2-digit", minute: "2-digit" });
+      pintarUbic("ok", `Compartiendo tu ubicación en vivo (precisión ±${Math.round(pos.coords.accuracy)} m · ${hora})`);
+    }
+  } catch (e) { /* sin conexión: se reintenta con la siguiente posición */ }
+}
+
+function iniciarUbicacion() {
+  if (ubicActiva) return;
+  if (!("geolocation" in navigator)) return pintarUbic("error", "Tu navegador no permite compartir la ubicación.");
+  ubicActiva = true;
+  pintarUbic("buscando", "Activando tu ubicación…");
+  // El GPS solo avisa cuando hay cambios: se reenvía la última posición cada 15 s
+  // para no perder la más reciente y para que el panel la vea "en vivo".
+  latido = setInterval(() => { if (ultimaPos) enviarUbicacion(ultimaPos); }, ENVIO_CADA_MS);
+  vigilancia = navigator.geolocation.watchPosition(
+    pos => enviarUbicacion(pos),
+    err => {
+      // Fallos pasajeros del GPS con una posición ya conocida: se sigue intentando
+      if (err.code !== err.PERMISSION_DENIED && ultimaPos) return;
+      ubicActiva = false;
+      if (vigilancia != null) navigator.geolocation.clearWatch(vigilancia);
+      vigilancia = null;
+      clearInterval(latido);
+      pintarUbic("error", err.code === err.PERMISSION_DENIED
+        ? "Ubicación bloqueada. Actívala en los permisos del navegador para este sitio."
+        : "No pudimos obtener tu ubicación. Revisa que el GPS esté encendido.", "Activar ubicación");
+    },
+    { enableHighAccuracy: true, maximumAge: 10000, timeout: 30000 }
+  );
+}
+
+function detenerUbicacion() {
+  if (vigilancia != null) navigator.geolocation.clearWatch(vigilancia);
+  vigilancia = null;
+  clearInterval(latido);
+  ubicActiva = false;
+  cajaUbic.className = "oculto";
+  cajaUbic.innerHTML = "";
+}
+
+// Al volver a la página (p. ej. tras bloquear el celular) se envía de inmediato
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden && ubicActiva && ultimaPos) enviarUbicacion(ultimaPos, true);
+});
+
 async function cargar() {
   try {
     const res = await fetch(`/api/pedidos/${encodeURIComponent(id)}`);
     if (res.status === 404) return error("No encontramos este pedido.");
     if (!res.ok) throw new Error();
-    const terminado = render(await res.json());
+    const pedido = await res.json();
+    const terminado = render(pedido);
+    if (pedido.tipo === "domicilio" && !terminado) iniciarUbicacion();
+    else detenerUbicacion();
     if (!terminado) setTimeout(cargar, 10000);
   } catch (e) {
     if (!root.querySelector(".titulo")) error("No se pudo cargar el pedido. Revisa tu conexión.");
