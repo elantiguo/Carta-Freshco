@@ -20,7 +20,7 @@ function renderSimple(s) {
   return `<div class="granizado-wrap">
     ${s.foto ? `<img class="granizado-foto" src="${encodeURI(s.foto.src)}" alt="${esc(s.foto.alt)}" loading="lazy">` : ""}
     <ul class="nombres">${s.items.map(i => `
-      <li><strong>${esc(i.nombre)}</strong><span>${esc(i.sabor)}</span></li>`).join("")}
+      <li><strong>${esc(i.nombre)}</strong></li>`).join("")}
     </ul>
   </div>`;
 }
