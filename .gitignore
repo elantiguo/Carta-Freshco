@@ -14,3 +14,8 @@ desktop.ini
 *.sublime-project
 *.sublime-workspace
 
+
+# Node / servidor
+node_modules/
+data/
+.env

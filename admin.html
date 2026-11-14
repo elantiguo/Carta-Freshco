@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="robots" content="noindex, nofollow">
+  <title>Panel Freshco</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik+Wet+Paint&family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body>
+  <div class="led" aria-hidden="true"></div>
+
+  <!-- Inicio de sesión -->
+  <section id="vista-login" class="login oculto">
+    <form id="form-login" class="login-caja" autocomplete="on">
+      <img src="img/logo.webp" alt="Freshco" width="1000" height="641">
+      <h1>Panel de pedidos</h1>
+      <label><span>Usuario</span><input id="login-usuario" name="username" autocomplete="username" required></label>
+      <label><span>Contraseña</span><input id="login-password" name="password" type="password" autocomplete="current-password" required></label>
+      <p id="login-error" class="login-error" role="alert"></p>
+      <button type="submit" class="btn-primario">Iniciar sesión</button>
+    </form>
+  </section>
+
+  <!-- Panel -->
+  <section id="vista-panel" class="panel oculto">
+    <header class="panel-cabecera">
+      <img src="img/logo.webp" alt="Freshco" width="1000" height="641">
+      <div class="panel-titulo">
+        <h1>Pedidos</h1>
+        <p id="panel-estado-conexion" class="conexion">Conectando…</p>
+      </div>
+      <div class="panel-acciones">
+        <button type="button" id="btn-sonido" class="btn-icono" aria-pressed="true" title="Sonido de nuevos pedidos">Sonido: sí</button>
+        <button type="button" id="btn-salir" class="btn-icono">Cerrar sesión</button>
+      </div>
+    </header>
+
+    <nav class="filtros" id="filtros" aria-label="Filtrar pedidos">
+      <button type="button" data-filtro="activos" class="activo">Activos <b id="cnt-activos">0</b></button>
+      <button type="button" data-filtro="nuevo">Nuevos <b id="cnt-nuevo">0</b></button>
+      <button type="button" data-filtro="preparando">Preparando <b id="cnt-preparando">0</b></button>
+      <button type="button" data-filtro="listo">Listos <b id="cnt-listo">0</b></button>
+      <button type="button" data-filtro="entregado">Entregados</button>
+      <button type="button" data-filtro="cancelado">Cancelados</button>
+      <button type="button" data-filtro="todos">Todos</button>
+    </nav>
+
+    <main id="lista-pedidos" class="lista-pedidos" aria-live="polite"></main>
+  </section>
+
+  <script src="js/draw.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

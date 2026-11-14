@@ -15,6 +15,7 @@
           <button type="button" id="btn-cerrar-modal" class="btn-cerrar" aria-label="Cerrar">${ICONS.close}</button>
         </div>
         <div id="modal-cuerpo" class="modal-cuerpo"></div>
+        <div id="modal-confirmacion" class="modal-confirmacion oculto" aria-live="polite"></div>
         <div class="modal-campos">
           <div class="selector-tipo">
             <button type="button" class="btn-tipo activo" data-tipo="local">En el local</button>
@@ -40,7 +41,7 @@
           <div class="modal-resumen"><span id="modal-total-cant">0 productos</span><strong id="modal-total-precio"></strong></div>
           <div class="modal-acciones">
             <button type="button" id="btn-vaciar" class="btn-secundario">Vaciar</button>
-            <button type="button" id="btn-enviar-whatsapp" class="btn-whatsapp">${ICONS.whatsapp}<span>Pedir</span></button>
+            <button type="button" id="btn-enviar-pedido" class="btn-enviar">${ICONS.send}<span>Enviar pedido</span></button>
           </div>
         </div>
       </div>
@@ -55,7 +56,7 @@
   const inputNombre = document.getElementById("pedido-nombre"), inputDir = document.getElementById("pedido-dir");
   let tipoEntrega = "local", mesaSeleccionada = "1";
 
-  const abrirModal = () => { renderModalCuerpo(); modal.classList.remove("oculto"); document.body.style.overflow = "hidden"; };
+  const abrirModal = () => { restaurarModal(); renderModalCuerpo(); modal.classList.remove("oculto"); document.body.style.overflow = "hidden"; };
   const cerrarModal = () => { modal.classList.add("oculto"); document.body.style.overflow = ""; };
 
   function renderModalCuerpo() {
@@ -126,14 +127,47 @@
     if (confirm("¿Deseas vaciar todos los productos del pedido?")) Pedido.vaciar();
   });
 
-  document.getElementById("btn-enviar-whatsapp").addEventListener("click", () => {
+  const btnEnviar = document.getElementById("btn-enviar-pedido");
+  const confirmacion = document.getElementById("modal-confirmacion");
+  const secciones = [modalCuerpo, dom.querySelector(".modal-campos"), dom.querySelector(".modal-pie")];
+
+  function mostrarConfirmacion(numero, id) {
+    secciones.forEach(el => el.classList.add("oculto"));
+    confirmacion.innerHTML = `
+      <div class="conf-check">${ICONS.check}</div>
+      <h3>¡Pedido #${esc(numero)} recibido!</h3>
+      <p>Ya lo estamos preparando. Puedes ver el estado de tu pedido aquí:</p>
+      <a class="btn-enviar" href="pedido.html?id=${encodeURIComponent(id)}">Ver mi pedido</a>
+      <button type="button" class="btn-secundario" id="btn-seguir">Seguir viendo la carta</button>`;
+    confirmacion.classList.remove("oculto");
+    document.getElementById("btn-seguir").addEventListener("click", cerrarModal);
+  }
+
+  function restaurarModal() {
+    confirmacion.classList.add("oculto");
+    secciones.forEach(el => el.classList.remove("oculto"));
+  }
+
+  btnEnviar.addEventListener("click", async () => {
     if (!Pedido.totalItems()) return alert("Agrega al menos un producto para enviar tu pedido.");
     if (tipoEntrega === "domicilio") {
       if (!inputNombre.value.trim()) { inputNombre.focus(); return alert("Por favor ingresa tu nombre para el domicilio."); }
       if (!inputDir.value.trim()) { inputDir.focus(); return alert("Por favor ingresa la dirección actual para la entrega."); }
     }
     const opts = { tipo: tipoEntrega, mesa: mesaSeleccionada, nombre: inputNombre.value, direccion: inputDir.value, notas: inputNotas.value };
-    enviarConFotos(Pedido.crearTextoWhatsapp(opts), Pedido.crearEnlaceWhatsapp(opts));
+    btnEnviar.disabled = true;
+    btnEnviar.querySelector("span").textContent = "Enviando...";
+    try {
+      const { id, numero } = await Pedido.enviar(opts);
+      inputNotas.value = "";
+      mostrarConfirmacion(numero, id);
+      Pedido.vaciar();
+    } catch (err) {
+      alert(err.message || "No se pudo enviar el pedido. Intenta de nuevo.");
+    } finally {
+      btnEnviar.disabled = false;
+      btnEnviar.querySelector("span").textContent = "Enviar pedido";
+    }
   });
 
   window.addEventListener("pedido:actualizado", () => {

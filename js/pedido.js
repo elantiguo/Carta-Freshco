@@ -1,11 +1,5 @@
-const CONFIG_PEDIDO = {
-  telefono: (typeof CARTA_CONFIG !== "undefined" && CARTA_CONFIG.telefonoWhatsapp) ? CARTA_CONFIG.telefonoWhatsapp : "573123740187",
-  nombreLocal: (typeof CARTA_CONFIG !== "undefined" && CARTA_CONFIG.nombreNegocio) ? CARTA_CONFIG.nombreNegocio : "Freshco",
-  urlWeb: (typeof CARTA_CONFIG !== "undefined" && CARTA_CONFIG.urlWeb) ? CARTA_CONFIG.urlWeb : "https://carta-freshco.onrender.com",
-  baseUrlImagenes: (typeof CARTA_CONFIG !== "undefined" && CARTA_CONFIG.baseUrlImagenes) ? CARTA_CONFIG.baseUrlImagenes : "https://raw.githubusercontent.com/elantiguo/Carta-Freshco/main/"
-};
-
 const STORAGE_KEY = "freshco_pedido_v1";
+const ULTIMO_KEY = "freshco_ultimo_pedido";
 
 const Pedido = {
   items: {},
@@ -78,65 +72,18 @@ const Pedido = {
     return Object.values(this.items).some(it => it.precio != null && it.precio > 0);
   },
 
-  _codificarUrl(opts = {}) {
-    const { tipo: t = "local", mesa: m = "1", nombre: nm = "", direccion: d = "", notas = "" } = opts;
-    const its = this.obtenerItems().map(it => ({
-      n: it.nombre, c: it.cantidad, s: it.seccion,
-      i: it.imagen || this.resolverImagen(it.id, it.nombre, it.seccion)
-    }));
-    const json = JSON.stringify({ t, m, nm, d, notas, its });
-    const b64 = btoa(unescape(encodeURIComponent(json))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-    let origen = typeof window !== "undefined" ? window.location.origin : "";
-    if (!origen || origen === "null" || origen.includes("127.0.0.1") || origen.includes("localhost") || origen.startsWith("file:")) {
-      origen = (CONFIG_PEDIDO.urlWeb || "https://carta-freshco.onrender.com").replace(/\/$/, "");
-    }
-    return `${origen}/pedido.html?p=${encodeURIComponent(b64)}`;
-  },
-
-  _construirLineas({ tipo = "local", mesa = "1", nombre = "", direccion = "", notas = "" } = {}) {
-    const items = this.obtenerItems();
-    const lineas = [
-      `*PEDIDO - ${CONFIG_PEDIDO.nombreLocal.toUpperCase()}*`,
-      "============================"
-    ];
-    if (tipo === "local") {
-      lineas.push(`*Modalidad:* En el local`);
-      lineas.push(`*Mesa:* Mesa ${mesa}`);
-    } else {
-      lineas.push(`*Modalidad:* A domicilio`);
-      if (nombre.trim()) lineas.push(`*Cliente:* ${nombre.trim()}`);
-      if (direccion.trim()) lineas.push(`*Direccion:* ${direccion.trim()}`);
-    }
-    lineas.push("----------------------------");
-    lineas.push("*DETALLE DEL PEDIDO:*");
-    items.forEach(it => {
-      const extra = it.seccion ? ` (${it.seccion})` : "";
-      const precioStr = it.precio ? ` - $${(it.precio * it.cantidad).toLocaleString("es-CO")}` : "";
-      lineas.push(`- ${it.cantidad}x ${it.nombre}${extra}${precioStr}`);
+  // Envía el pedido al servidor. Devuelve { id, numero }.
+  async enviar({ tipo = "local", mesa = "1", nombre = "", direccion = "", notas = "" } = {}) {
+    const items = this.obtenerItems().map(it => ({ id: it.id, cantidad: it.cantidad }));
+    const res = await fetch("/api/pedidos", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tipo, mesa, nombre, direccion, notas, items })
     });
-    lineas.push("----------------------------");
-    lineas.push(`*Total unidades:* ${this.totalItems()}`);
-    if (this.tienePrecios()) lineas.push(`*Total estimado:* $${this.totalPrecio().toLocaleString("es-CO")}`);
-    if (notas.trim()) {
-      lineas.push("----------------------------");
-      lineas.push(`*Notas:* ${notas.trim()}`);
-    }
-    lineas.push("============================");
-    lineas.push("¡Gracias! Espero confirmacion.");
-    return lineas;
-  },
-
-  crearTextoWhatsapp(opts = {}) {
-    return this.obtenerItems().length ? this._construirLineas(opts).join("\n") : "";
-  },
-
-  crearEnlaceWhatsapp(opts = {}) {
-    if (!this.obtenerItems().length) return "";
-    const lineas = this._construirLineas(opts);
-    lineas.push("----------------------------");
-    lineas.push(`Ver pedido con fotos: ${this._codificarUrl(opts)}`);
-    const num = CONFIG_PEDIDO.telefono.replace(/\D/g, "");
-    return `https://wa.me/${num}?text=${encodeURIComponent(lineas.join("\n"))}`;
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || "No se pudo enviar el pedido");
+    try { localStorage.setItem(ULTIMO_KEY, data.id); } catch (e) {}
+    return data;
   }
 };
 

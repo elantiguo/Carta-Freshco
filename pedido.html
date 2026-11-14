@@ -28,6 +28,12 @@
     .item-cant { margin-left: auto; background: rgba(127,212,255,.12); border: 1px solid rgba(127,212,255,.4); border-radius: 999px; padding: 4px 13px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 17px; color: #7fd4ff; white-space: nowrap; flex-shrink: 0; }
     .total { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700; text-align: right; color: #7fd4ff; padding-top: 12px; }
     .error { text-align: center; padding: 60px 20px; color: #9aa6bb; font-size: 15px; }
+    .estado { font-family: 'Barlow Condensed', sans-serif; font-size: 26px; font-weight: 700; text-transform: uppercase; color: #7fd4ff; }
+    .pasos { list-style: none; display: flex; gap: 6px; margin-top: 12px; }
+    .pasos li { flex: 1; text-align: center; font-size: 12px; color: #9aa6bb; padding-top: 10px; border-top: 4px solid rgba(255,255,255,.12); border-radius: 2px; }
+    .pasos li.hecho { border-color: #7fd4ff; color: #f2f6fc; }
+    .pasos li.actual { font-weight: 600; }
+    .cancelado { margin-top: 8px; color: #ff5c6d; }
     .btn-volver { display: inline-block; margin-top: 15px; padding: 8px 18px; border-radius: 999px; background: rgba(255,255,255,.08); color: #fff; text-decoration: none; font-family: 'Barlow Condensed', sans-serif; font-size: 15px; }
   </style>
 </head>
@@ -35,55 +41,68 @@
 <img src="img/logo.webp" alt="Freshco" class="logo">
 <div id="root"><div class="error">Cargando pedido...</div></div>
 <script>
-const BASE = "https://raw.githubusercontent.com/elantiguo/Carta-Freshco/main/";
-const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const ESTADOS = {
+  nuevo:      { txt: "Recibido",       paso: 0 },
+  preparando: { txt: "En preparación", paso: 1 },
+  listo:      { txt: "Listo",          paso: 2 },
+  entregado:  { txt: "Entregado",      paso: 3 },
+  cancelado:  { txt: "Cancelado",      paso: -1 }
+};
+const PASOS = ["Recibido", "Preparando", "Listo", "Entregado"];
+const root = document.getElementById("root");
+const id = new URLSearchParams(location.search).get("id");
 
-function decodificar(p) {
-  if (!p) throw new Error("Vacío");
-  let s = p.replace(/-/g, "+").replace(/_/g, "/").replace(/ /g, "+");
-  while (s.length % 4) s += "=";
-  try {
-    const bin = atob(s);
-    try { return JSON.parse(decodeURIComponent(escape(bin))); } catch(e){}
-    try { return JSON.parse(decodeURIComponent(bin)); } catch(e){}
-    try { return JSON.parse(bin); } catch(e){}
-  } catch(e) {}
-  try { return JSON.parse(decodeURIComponent(p)); } catch(e){}
-  try { return JSON.parse(p); } catch(e){}
-  throw new Error("No parseable");
-}
-
-try {
-  const p = new URLSearchParams(location.search).get("p");
-  const { t, m, nm, d, its = [], notas } = decodificar(p);
-
-  const modo = t === "local"
-    ? `<span class="badge badge-local">En el local – Mesa ${esc(m)}</span>`
+function render(p) {
+  const est = ESTADOS[p.estado] || ESTADOS.nuevo;
+  const modo = p.tipo === "local"
+    ? `<span class="badge badge-local">En el local – Mesa ${esc(p.mesa)}</span>`
     : `<span class="badge badge-dom">A domicilio</span>`;
-
-  const extra = t !== "local" ? [
-    nm ? `<div class="fila"><strong>Cliente:</strong><span>${esc(nm)}</span></div>` : "",
-    d  ? `<div class="fila"><strong>Dirección:</strong><span>${esc(d)}</span></div>` : ""
+  const extra = p.tipo !== "local" ? [
+    p.nombre ? `<div class="fila"><strong>Cliente:</strong><span>${esc(p.nombre)}</span></div>` : "",
+    p.direccion ? `<div class="fila"><strong>Dirección:</strong><span>${esc(p.direccion)}</span></div>` : ""
   ].join("") : "";
-
-  const totalU = its.reduce((a, i) => a + (Number(i.c) || 1), 0);
-
-  const itemsHtml = its.map(it => {
-    const img = it.i ? `<img src="${esc(BASE + encodeURI(it.i))}" alt="${esc(it.n)}" loading="lazy">` : "";
-    return `<div class="item">${img}<div><div class="item-nom">${esc(it.n)}</div><div class="item-sec">${esc(it.s || "")}</div></div><span class="item-cant">${it.c}x</span></div>`;
+  const progreso = est.paso < 0
+    ? `<p class="cancelado">Este pedido fue cancelado. Pregunta en la barra si tienes dudas.</p>`
+    : `<ol class="pasos">${PASOS.map((t, i) => `<li class="${i <= est.paso ? "hecho" : ""}${i === est.paso ? " actual" : ""}">${t}</li>`).join("")}</ol>`;
+  const itemsHtml = p.items.map(it => {
+    const img = it.imagen ? `<img src="${esc(encodeURI(it.imagen))}" alt="${esc(it.nombre)}" loading="lazy">` : "";
+    return `<div class="item">${img}<div><div class="item-nom">${esc(it.nombre)}</div><div class="item-sec">${esc(it.seccion)}</div></div><span class="item-cant">${it.cantidad}x</span></div>`;
   }).join("");
+  const total = p.total ? ` · $${Number(p.total).toLocaleString("es-CO")}` : "";
 
-  document.getElementById("root").innerHTML = `
-    <p class="titulo">Pedido Freshco</p>
-    <p class="sub">Resumen de orden</p>
+  root.innerHTML = `
+    <p class="titulo">Pedido #${esc(p.numero)}</p>
+    <p class="sub">${new Date(p.creado).toLocaleString("es-CO", { dateStyle: "medium", timeStyle: "short" })}</p>
+    <div class="tarjeta"><p class="sec-titulo">Estado</p><p class="estado">${est.txt}</p>${progreso}</div>
     <div class="tarjeta"><div class="modo">${modo}</div>${extra}</div>
     <div class="tarjeta"><p class="sec-titulo">Detalle del pedido</p>${itemsHtml}
-      <p class="total">Total: ${totalU} ${totalU === 1 ? "producto" : "productos"}</p>
+      <p class="total">Total: ${p.unidades} ${p.unidades === 1 ? "producto" : "productos"}${total}</p>
     </div>
-    ${notas ? `<div class="tarjeta"><p class="sec-titulo">Notas</p><p>${esc(notas)}</p></div>` : ""}`;
-} catch(e) {
-  document.getElementById("root").innerHTML = `<div class="error"><p>No se pudo cargar el pedido.</p><a href="index.html" class="btn-volver">Ir a la carta</a></div>`;
+    ${p.notas ? `<div class="tarjeta"><p class="sec-titulo">Notas</p><p>${esc(p.notas)}</p></div>` : ""}
+    <p style="text-align:center"><a href="index.html" class="btn-volver">Volver a la carta</a></p>`;
+  return p.estado === "entregado" || p.estado === "cancelado";
 }
+
+function error(msg) {
+  root.innerHTML = `<div class="error"><p>${esc(msg)}</p><a href="index.html" class="btn-volver">Ir a la carta</a></div>`;
+}
+
+async function cargar() {
+  try {
+    const res = await fetch(`/api/pedidos/${encodeURIComponent(id)}`);
+    if (res.status === 404) return error("No encontramos este pedido.");
+    if (!res.ok) throw new Error();
+    const terminado = render(await res.json());
+    if (!terminado) setTimeout(cargar, 10000);
+  } catch (e) {
+    if (!root.querySelector(".titulo")) error("No se pudo cargar el pedido. Revisa tu conexión.");
+    setTimeout(cargar, 15000);
+  }
+}
+
+if (!id) error("No se indicó ningún pedido.");
+else cargar();
 </script>
 </body>
 </html>
