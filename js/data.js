@@ -4,7 +4,7 @@ const CARTA = [
     titulo: "De la <em>casa</em>",
     nota: "Y nuestros vasos Freshco, cargados de hielo y dulces. Pregunta en la barra por los sabores de hoy.",
     items: [
-      { nombre: "Chocofresh", imagen: "img/choco_fresh.jpg", sabor: "Chocolate y naranja", vaso: "corto", hielo: true, adornos: ["lima"], color: ["#ffa63d", "#5a2a0c"], precio: null }
+      { nombre: "Chocofresh", imagen: "img/choco_fresh.jpg", vaso: "corto", hielo: true, adornos: ["lima"], color: ["#ffa63d", "#5a2a0c"], precio: null }
     ],
     fotos: [
       { src: "img/vaso-morado.jpg", alt: "Vaso Freshco morado con gomitas y bolitas de colores" },
@@ -15,12 +15,12 @@ const CARTA = [
     id: "cocteles", atajo: "Cócteles", tono: "rojo",
     titulo: "Los <em>cócteles</em>",
     items: [
-      { nombre: "Cuba Libre", imagen: "img/cuba-libre.png", sabor: "Cola y limón", vaso: "alto", hielo: true, color: ["#8a4a1c", "#2a1208"], precio: null },
-      { nombre: "Blue Lagoon", imagen: "img/blue-lagoon.webp", sabor: "Curazao azul y limonada", vaso: "alto", hielo: true, color: ["#3fd0ff", "#0a55ff"], precio: null },
-      { nombre: "Tequila Sunrise", imagen: "img/tequilla-sunrise.jpg", sabor: "Naranja y granadina", vaso: "alto", hielo: true, color: ["#ffc21a", "#ff2a2a"], precio: null },
-      { nombre: "Margarita", imagen: "img/margarita.png", sabor: "Lima con sal", vaso: "margarita", color: ["#f6fbc0", "#b5df52"], precio: null },
-      { nombre: "Piña Colada", imagen: "img/piñacolada.jpg", sabor: "Coco y piña", vaso: "huracan", color: ["#fffbe0", "#ffdc6b"], precio: null },
-      { nombre: "Daiquiri de fresa", imagen: "img/Daiquiri de fresa.jpg", sabor: "Fresa tropical", vaso: "copa", color: ["#ff8a98", "#dd0f2d"], precio: null }
+      { nombre: "Cuba Libre", imagen: "img/cuba-libre.png", vaso: "alto", hielo: true, color: ["#8a4a1c", "#2a1208"], precio: null },
+      { nombre: "Blue Lagoon", imagen: "img/blue-lagoon.webp", vaso: "alto", hielo: true, color: ["#3fd0ff", "#0a55ff"], precio: null },
+      { nombre: "Tequila Sunrise", imagen: "img/tequilla-sunrise.jpg", vaso: "alto", hielo: true, color: ["#ffc21a", "#ff2a2a"], precio: null },
+      { nombre: "Margarita", imagen: "img/margarita.png", vaso: "margarita", color: ["#f6fbc0", "#b5df52"], precio: null },
+      { nombre: "Piña Colada", imagen: "img/piñacolada.jpg", vaso: "huracan", color: ["#fffbe0", "#ffdc6b"], precio: null },
+      { nombre: "Daiquiri de fresa", imagen: "img/Daiquiri de fresa.jpg", vaso: "copa", color: ["#ff8a98", "#dd0f2d"], precio: null }
     ],
     fotos: [
       { src: "img/coctel-limon.jpg", alt: "Cóctel con rodaja de limón sobre la barra de Freshco" },
