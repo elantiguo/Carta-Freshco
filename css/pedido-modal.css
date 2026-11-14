@@ -136,3 +136,11 @@
   flex-shrink: 0; padding: 7px 14px; border-radius: 999px; border: none; cursor: pointer; background: #25d366; color: #05060c;
   font-family: var(--f-nombre); font-weight: 700; font-size: 14px; text-transform: uppercase; letter-spacing: .04em;
 }
+
+/* Celulares pequeños: toda la ventana se desplaza; título arriba y botón de enviar
+   siempre visibles (antes el formulario de domicilio empujaba el botón fuera de la pantalla) */
+.modal-caja { max-height: 88vh; max-height: 88dvh; overflow-y: auto; overscroll-behavior: contain; }
+.modal-cuerpo { flex: none; overflow: visible; }
+.modal-cabecera { position: sticky; top: 0; z-index: 2; background: #0c0e18; }
+.modal-pie { position: sticky; bottom: 0; z-index: 2; background: #0c0e18; padding-bottom: max(20px, env(safe-area-inset-bottom)); }
+.selector-tipo { scroll-margin-top: 84px; }

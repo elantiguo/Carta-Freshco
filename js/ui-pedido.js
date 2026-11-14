@@ -120,7 +120,11 @@
     Pedido.cambiarTipo(tipoEntrega);
     campoLocal.classList.toggle("oculto", tipoEntrega !== "local");
     campoDomicilio.classList.toggle("oculto", tipoEntrega !== "domicilio");
-    if (tipoEntrega === "domicilio" && !ubicacion) pedirUbicacion();
+    if (tipoEntrega === "domicilio") {
+      // En celulares pequeños los datos de domicilio quedan abajo: se desplaza hasta ellos
+      dom.querySelector(".selector-tipo").scrollIntoView({ block: "start", behavior: "smooth" });
+      if (!ubicacion) pedirUbicacion();
+    }
   }));
 
   // ---------- Ubicación del cliente (domicilios) ----------
