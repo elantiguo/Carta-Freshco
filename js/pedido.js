@@ -77,6 +77,18 @@ const Pedido = {
     return Object.values(this.items).some(it => it.precio != null && it.precio > 0);
   },
 
+  _codificarUrl(opts = {}) {
+    const { tipo: t = "local", mesa: m = "1", nombre: nm = "", direccion: d = "", notas = "" } = opts;
+    const its = this.obtenerItems().map(it => ({
+      n: it.nombre, c: it.cantidad, s: it.seccion,
+      i: it.imagen || this.resolverImagen(it.id, it.nombre, it.seccion)
+    }));
+    const json = JSON.stringify({ t, m, nm, d, notas, its });
+    const base64 = btoa(encodeURIComponent(json));
+    const origen = typeof window !== "undefined" ? window.location.origin : "";
+    return `${origen}/pedido.html?p=${base64}`;
+  },
+
   _construirLineas({ tipo = "local", mesa = "1", nombre = "", direccion = "", notas = "" } = {}) {
     const items = this.obtenerItems();
     const lineas = [
@@ -118,7 +130,10 @@ const Pedido = {
 
   crearEnlaceWhatsapp(opts = {}) {
     if (!this.obtenerItems().length) return "";
-    const texto = this._construirLineas(opts).join("\n");
+    const lineas = this._construirLineas(opts);
+    lineas.push("----------------------------");
+    lineas.push(`Ver pedido con fotos: ${this._codificarUrl(opts)}`);
+    const texto = lineas.join("\n");
     const num = CONFIG_PEDIDO.telefono.replace(/\D/g, "");
     return `https://wa.me/${num}?text=${encodeURIComponent(texto)}`;
   }

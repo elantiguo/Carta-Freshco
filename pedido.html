@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pedido – Freshco</title>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Barlow:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #05060c; color: #f2f6fc; font-family: 'Barlow', sans-serif; min-height: 100vh; padding: 24px 18px 48px; max-width: 520px; margin: 0 auto; }
+    .logo { width: 150px; display: block; margin: 0 auto 20px; }
+    .titulo { font-family: 'Barlow Condensed', sans-serif; font-size: 30px; font-weight: 700; text-align: center; text-transform: uppercase; letter-spacing: .06em; color: #fff; }
+    .sub { text-align: center; color: #9aa6bb; font-size: 13px; margin: 4px 0 22px; }
+    .tarjeta { background: rgba(255,255,255,.045); border: 1px solid rgba(255,255,255,.1); border-radius: 20px; padding: 16px 18px; margin-bottom: 14px; }
+    .modo { text-align: center; margin-bottom: 10px; }
+    .badge { display: inline-block; padding: 5px 16px; border-radius: 999px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 15px; text-transform: uppercase; letter-spacing: .05em; }
+    .badge-local { background: rgba(164,91,255,.2); border: 1px solid #a45bff; color: #a45bff; }
+    .badge-dom { background: rgba(37,211,102,.15); border: 1px solid #25d366; color: #25d366; }
+    .fila { display: flex; gap: 10px; margin-top: 7px; font-size: 15px; }
+    .fila strong { color: #7fd4ff; min-width: 90px; }
+    .sec-titulo { font-family: 'Barlow Condensed', sans-serif; font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: #9aa6bb; margin-bottom: 10px; }
+    .item { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,.08); }
+    .item:last-child { border-bottom: none; }
+    .item img { width: 54px; height: 54px; border-radius: 12px; object-fit: cover; border: 1px solid rgba(255,255,255,.12); flex-shrink: 0; }
+    .item-nom { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; text-transform: uppercase; line-height: 1.1; }
+    .item-sec { font-size: 13px; color: #9aa6bb; }
+    .item-cant { margin-left: auto; background: rgba(127,212,255,.12); border: 1px solid rgba(127,212,255,.4); border-radius: 999px; padding: 4px 13px; font-family: 'Barlow Condensed', sans-serif; font-weight: 700; font-size: 17px; color: #7fd4ff; white-space: nowrap; flex-shrink: 0; }
+    .total { font-family: 'Barlow Condensed', sans-serif; font-size: 18px; font-weight: 700; text-align: right; color: #7fd4ff; padding-top: 12px; }
+    .error { text-align: center; padding: 60px 20px; color: #9aa6bb; font-size: 15px; }
+  </style>
+</head>
+<body>
+<img src="img/logo.webp" alt="Freshco" class="logo">
+<div id="root"><div class="error">Cargando pedido...</div></div>
+<script>
+const BASE = "https://raw.githubusercontent.com/elantiguo/Carta-Freshco/main/";
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+try {
+  const p = new URLSearchParams(location.search).get("p");
+  if (!p) throw 0;
+  const { t, m, nm, d, its = [], notas } = JSON.parse(decodeURIComponent(atob(p)));
+
+  const modo = t === "local"
+    ? `<span class="badge badge-local">En el local – Mesa ${esc(m)}</span>`
+    : `<span class="badge badge-dom">A domicilio</span>`;
+
+  const extra = t !== "local" ? [
+    nm ? `<div class="fila"><strong>Cliente:</strong><span>${esc(nm)}</span></div>` : "",
+    d  ? `<div class="fila"><strong>Dirección:</strong><span>${esc(d)}</span></div>` : ""
+  ].join("") : "";
+
+  const totalU = its.reduce((a, i) => a + i.c, 0);
+
+  const itemsHtml = its.map(it => {
+    const img = it.i ? `<img src="${esc(BASE + encodeURI(it.i))}" alt="${esc(it.n)}" loading="lazy">` : "";
+    return `<div class="item">${img}<div><div class="item-nom">${esc(it.n)}</div><div class="item-sec">${esc(it.s || "")}</div></div><span class="item-cant">${it.c}x</span></div>`;
+  }).join("");
+
+  document.getElementById("root").innerHTML = `
+    <p class="titulo">Pedido Freshco</p>
+    <p class="sub">Resumen de orden</p>
+    <div class="tarjeta"><div class="modo">${modo}</div>${extra}</div>
+    <div class="tarjeta"><p class="sec-titulo">Detalle del pedido</p>${itemsHtml}
+      <p class="total">Total: ${totalU} ${totalU === 1 ? "producto" : "productos"}</p>
+    </div>
+    ${notas ? `<div class="tarjeta"><p class="sec-titulo">Notas</p><p>${esc(notas)}</p></div>` : ""}`;
+} catch(e) {
+  document.getElementById("root").innerHTML = `<div class="error">No se pudo cargar el pedido.</div>`;
+}
+</script>
+</body>
+</html>
